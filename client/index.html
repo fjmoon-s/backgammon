@@ -11,7 +11,6 @@
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding: 16px; transition: background 0.4s, color 0.4s; }
 
-/* ── layout ── */
 .point-cell { position: relative; width: 52px; height: 192px; cursor: pointer; overflow: visible; }
 .tri { position: absolute; width: 0; height: 0; border-left: 26px solid transparent; border-right: 26px solid transparent; pointer-events: none; }
 .pt-overlay { position: absolute; inset: 0; z-index: 5; pointer-events: none; border-radius: 2px; }
@@ -36,7 +35,8 @@ body { min-height: 100vh; display: flex; flex-direction: column; align-items: ce
 .bearoff-label { font-size: 0.58rem; } .bearoff-count { font-size: 1.1rem; font-weight: bold; }
 .bearoff-pips { display: flex; flex-direction: column; align-items: center; gap: 2px; flex: 1; justify-content: flex-start; width: 100%; }
 .dice-row { display: flex; gap: 10px; align-items: center; justify-content: center; margin: 10px 0; flex-wrap: wrap; }
-.die { width: 46px; height: 46px; border-radius: 9px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: bold; transition: opacity 0.25s; }
+/* サイコロ: 数字表示に統一（絵文字より視認性高い） */
+.die { width: 46px; height: 46px; border-radius: 9px; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; font-weight: 900; transition: opacity 0.25s; letter-spacing: 0; }
 .die.used { opacity: 0.22; }
 .status-bar { border-radius: 8px; padding: 10px 24px; margin-bottom: 10px; text-align: center; width: 100%; max-width: 780px; }
 .status-turn { font-size: 1rem; font-weight: bold; } .status-msg { font-size: 0.82rem; margin-top: 3px; min-height: 1.2em; opacity: 0.7; }
@@ -49,22 +49,29 @@ button:disabled { opacity: 0.3; cursor: not-allowed; }
 .winner-box { border-radius: 14px; padding: 44px 64px; text-align: center; }
 .winner-box h2 { font-size: 2rem; margin-bottom: 10px; } .winner-box p { margin-bottom: 28px; opacity: 0.7; }
 
+/* ── モーダル（遊び方） ── */
+.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.75); display: flex; align-items: center; justify-content: center; z-index: 200; padding: 16px; }
+.modal-box { border-radius: 12px; padding: 32px 36px; max-width: 520px; width: 100%; max-height: 80vh; overflow-y: auto; position: relative; }
+.modal-box h2 { font-size: 1.3rem; font-weight: bold; margin-bottom: 18px; }
+.modal-box h3 { font-size: 0.95rem; font-weight: bold; margin: 16px 0 6px; opacity: 0.85; }
+.modal-box p, .modal-box li { font-size: 0.85rem; line-height: 1.7; opacity: 0.85; }
+.modal-box ul { padding-left: 18px; }
+.modal-close { position: absolute; top: 14px; right: 18px; background: none; border: none; font-size: 1.4rem; cursor: pointer; padding: 0; opacity: 0.6; font-weight: normal; }
+.modal-close:hover { opacity: 1; }
+
 /* ── theme picker ── */
-.theme-screen { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 28px; padding: 32px; }
+.theme-screen { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 24px; padding: 32px; }
 .theme-cards { display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; }
-.theme-card { width: 200px; border-radius: 12px; padding: 24px 16px; text-align: center; cursor: pointer; transition: transform 0.18s, box-shadow 0.18s; border: 2px solid transparent; }
+.theme-card { width: 180px; border-radius: 12px; padding: 24px 16px; text-align: center; cursor: pointer; transition: transform 0.18s, box-shadow 0.18s; border: 2px solid transparent; }
 .theme-card:hover { transform: translateY(-6px); }
 .theme-card-icon { font-size: 2.8rem; margin-bottom: 10px; }
-.theme-card-name { font-size: 1rem; font-weight: bold; letter-spacing: 2px; margin-bottom: 6px; }
-.theme-card-desc { font-size: 0.75rem; opacity: 0.6; line-height: 1.6; }
-.theme-swatch { display: flex; gap: 5px; justify-content: center; margin-top: 12px; }
-.theme-swatch-dot { width: 14px; height: 14px; border-radius: 50%; }
+.theme-card-name { font-size: 1rem; font-weight: bold; letter-spacing: 2px; }
 .start-btn { padding: 14px 48px; font-size: 1rem; font-weight: bold; border: none; border-radius: 8px; cursor: pointer; letter-spacing: 2px; transition: opacity 0.2s, transform 0.15s; }
 .start-btn:hover { transform: scale(1.04); opacity: 0.9; }
+.how-to-btn { background: none; border: 1px solid currentColor; border-radius: 6px; padding: 8px 24px; font-size: 0.85rem; cursor: pointer; opacity: 0.6; letter-spacing: 1px; transition: opacity 0.2s; font-weight: normal; }
+.how-to-btn:hover { opacity: 1; }
 
-/* ══════════════════════════════════
-   RETRO THEME
-══════════════════════════════════ */
+/* ══ RETRO ══ */
 body.t-retro { background: #EDE0B8; color: #3A1800; font-family: Georgia, serif; }
 body.t-retro .status-bar { background: #D4C090; border: 2px solid #8B3A10; }
 body.t-retro .status-turn { color: #8B3A10; }
@@ -86,26 +93,27 @@ body.t-retro .checker.white { background: #F5F0E0; border: 3px solid #8B3A10; co
 body.t-retro .checker.black { background: #3A1800; border: 3px solid #C4A24A; color: #FFD700; }
 body.t-retro .btn-primary   { background: #8B3A10; color: #F5F0E0; }
 body.t-retro .btn-secondary { background: #C4A24A; color: #3A1800; }
-body.t-retro .btn-danger    { background: #5A0808; color: #F5F0E0; }
+body.t-retro .btn-danger    { background: #5A2A18; color: #F5F0E0; }
 body.t-retro button:hover:not(:disabled) { opacity: 0.82; }
+body.t-retro .modal-box { background: #EDE0B8; border: 2px solid #8B3A10; color: #3A1800; }
+body.t-retro .modal-close { color: #3A1800; }
+body.t-retro .how-to-btn { color: #8B3A10; border-color: #8B3A10; }
 
-/* ══════════════════════════════════
-   LOFI THEME
-══════════════════════════════════ */
+/* ══ LOFI ══ */
 body.t-lofi { background: #1E1E24; color: #C8B898; font-family: 'Helvetica Neue', sans-serif; }
 body.t-lofi .status-bar { background: #28282F; border: 1px solid #4A4A5A; }
 body.t-lofi .status-turn { color: #D8C8A8; }
 body.t-lofi .log { background: #28282F; border: 1px solid #3A3A4A; color: #888; }
 body.t-lofi .winner-box { background: #2C2C34; border: 1px solid #7A8C6A; }
 body.t-lofi .winner-box h2 { color: #B8D898; }
-body.t-lofi .die { background: #2A2818; color: #D8C8A8; border: 1px solid #7A8C6A; border-radius: 6px; }
+/* lofi dice: 明るい背景に濃い数字で視認性確保 */
+body.t-lofi .die { background: #E8D8B8; color: #2A1800; border: 1px solid #7A8C6A; border-radius: 6px; }
 body.t-lofi .board-shell { background: #3A3028; border: 3px solid #4A4A3A; }
 body.t-lofi .mid-spacer { background: #2A2018; color: #5A5A4A; }
 body.t-lofi .bar-col { background: #2A2018; } .t-lofi .bar-col.can-enter { background: #4A4038; }
 body.t-lofi .bar-label { color: rgba(200,180,150,0.3); }
 body.t-lofi .bearoff-col { background: #222018; } .t-lofi .bearoff-label { color: #6A6A5A; } .t-lofi .bearoff-count { color: #B8D898; }
 body.t-lofi .pt-num { color: rgba(200,184,152,0.6); }
-/* G修正: 薄かった色をテラコッタ(#C8704A)に変更 → 両色ともコントラスト確保 */
 body.t-lofi .tri.up.tA { border-top:    186px solid #7A8C6A; }
 body.t-lofi .tri.up.tB { border-top:    186px solid #C8704A; }
 body.t-lofi .tri.dn.tA { border-bottom: 186px solid #7A8C6A; }
@@ -114,19 +122,21 @@ body.t-lofi .checker.white { background: #D8C8A8; border: 2px solid #A89878; col
 body.t-lofi .checker.black { background: #5A4838; border: 2px solid #9A8868; color: #E8D8B8; }
 body.t-lofi .btn-primary   { background: #7A8C6A; color: #1E1E24; }
 body.t-lofi .btn-secondary { background: #3A3028; color: #C8B898; border: 1px solid #5A5A4A; }
-body.t-lofi .btn-danger    { background: #6A3020; color: #D8C8A8; }
+body.t-lofi .btn-danger    { background: #4A2A1A; color: #D8C8A8; border: 1px solid #6A4A3A; }
 body.t-lofi button:hover:not(:disabled) { opacity: 0.80; }
+body.t-lofi .modal-box { background: #2C2C34; border: 1px solid #4A4A5A; color: #C8B898; }
+body.t-lofi .modal-close { color: #C8B898; }
+body.t-lofi .how-to-btn { color: #C8B898; border-color: #4A4A5A; }
 
-/* ══════════════════════════════════
-   CYBER THEME
-══════════════════════════════════ */
+/* ══ CYBER ══ */
 body.t-cyber { background: #050510; color: #00FFFF; font-family: 'Courier New', monospace; }
 body.t-cyber .status-bar { background: #080820; border: 1px solid #00FFFF; border-radius: 2px; }
 body.t-cyber .status-turn { color: #00FFFF; letter-spacing: 2px; }
 body.t-cyber .log { background: #080820; border: 1px solid #FF00FF44; color: #00FFFF88; border-radius: 2px; }
 body.t-cyber .winner-box { background: #080820; border: 2px solid #FF00FF; border-radius: 4px; }
 body.t-cyber .winner-box h2 { color: #FF00FF; letter-spacing: 3px; }
-body.t-cyber .die { background: #080820; color: #FFFF00; border: 1.5px solid #FFFF00; border-radius: 2px; box-shadow: 0 0 8px #FFFF0055; }
+/* cyber dice: 白背景に黒数字で目が確実に読める */
+body.t-cyber .die { background: #EEFFFF; color: #000; border: 2px solid #00FFFF; border-radius: 2px; box-shadow: 0 0 8px #00FFFF66; }
 body.t-cyber .board-shell { background: #050510; border: 2px solid #FF00FF55; border-radius: 2px; box-shadow: 0 0 24px #FF00FF22; }
 body.t-cyber .mid-spacer { background: #0A0520; color: #00FFFF33; }
 body.t-cyber .bar-col { background: #0A0520; } .t-cyber .bar-col.can-enter { background: #160840; }
@@ -134,19 +144,21 @@ body.t-cyber .bar-label { color: rgba(255,255,0,0.4); }
 body.t-cyber .bearoff-col { background: #080820; border: 1px solid #00FFFF33; border-radius: 1px; }
 body.t-cyber .bearoff-label { color: #00FFFF88; } .t-cyber .bearoff-count { color: #00FFFF; }
 body.t-cyber .pt-num { color: #00FFFF99; }
-/* H修正: どちらも明度の高いビビッドな色 + 黒文字で視認性確保 */
 body.t-cyber .tri.up.tA { border-top:    186px solid #006688; }
 body.t-cyber .tri.up.tB { border-top:    186px solid #770055; }
 body.t-cyber .tri.dn.tA { border-bottom: 186px solid #006688; }
 body.t-cyber .tri.dn.tB { border-bottom: 186px solid #770055; }
-/* コマ: 白=明るいシアン(#00FFEE)黒文字 / 黒=明るいマゼンタ(#FF44CC)黒文字 → 両方くっきり */
 body.t-cyber .checker.white { background: #00FFEE; border: 2px solid #FFFFFF; color: #000; box-shadow: 0 0 10px #00FFEE88; }
 body.t-cyber .checker.black { background: #FF44CC; border: 2px solid #FFFFFF; color: #000; box-shadow: 0 0 10px #FF44CC88; }
 body.t-cyber .btn-primary   { background: #080820; color: #FF00FF; border: 1.5px solid #FF00FF; border-radius: 2px; letter-spacing: 2px; box-shadow: 0 0 8px #FF00FF44; }
 body.t-cyber .btn-secondary { background: #080820; color: #00FFFF; border: 1.5px solid #00FFFF44; border-radius: 2px; }
-body.t-cyber .btn-danger    { background: #080820; color: #FF4444; border: 1.5px solid #FF444466; border-radius: 2px; }
+body.t-cyber .btn-danger    { background: #080820; color: #FF6666; border: 1.5px solid #FF444466; border-radius: 2px; }
 body.t-cyber button:hover:not(:disabled) { opacity: 0.72; }
 body.t-cyber h1 { letter-spacing: 6px; }
+body.t-cyber .modal-box { background: #080820; border: 1.5px solid #00FFFF; border-radius: 4px; color: #00FFFF; }
+body.t-cyber .modal-box h3 { color: #FF00FF; }
+body.t-cyber .modal-close { color: #00FFFF; }
+body.t-cyber .how-to-btn { color: #00FFFF; border-color: #00FFFF44; border-radius: 2px; }
 </style>
 </head>
 <body class="t-retro">
@@ -154,11 +166,11 @@ body.t-cyber h1 { letter-spacing: 6px; }
 <script type="text/babel">
 const { useState, useCallback, useMemo } = React;
 
-/* ── THEME DEFINITIONS ── */
+/* ── THEMES ── */
 const THEMES = {
-  retro: { key:'retro', cls:'t-retro', name:'RETRO CHIC', icon:'🎞️', desc:'70sポスター風\nマスタード × ラスト', swatches:['#8B3A10','#E8C840','#F5F0E0','#C4A24A'] },
-  lofi:  { key:'lofi',  cls:'t-lofi',  name:'LO-FI CHILL', icon:'🎧', desc:'ダーク × アースカラー\n小洒落た落ち着き感', swatches:['#7A8C6A','#C8704A','#D8C8A8','#5A4838'] },
-  cyber: { key:'cyber', cls:'t-cyber', name:'CYBERPUNK',   icon:'⚡', desc:'ネオン × ダーク\nサイバーパンクビビッド', swatches:['#00FFEE','#FF44CC','#FFFF00','#FF00FF'] },
+  retro: { key:'retro', cls:'t-retro', name:'RETRO CHIC', icon:'🎞️' },
+  lofi:  { key:'lofi',  cls:'t-lofi',  name:'LO-FI CHILL', icon:'🎧' },
+  cyber: { key:'cyber', cls:'t-cyber', name:'CYBERPUNK',   icon:'⚡' },
 };
 
 /* ── GAME CONSTANTS ── */
@@ -193,12 +205,11 @@ const hasHigher = (board,from,c) => {
   else { for(let i=from-1;i>=18;i--) if(board[i].color===BLACK&&board[i].count>0) return true; }
   return false;
 };
-const movesFromBar = (board,dice,used,c) => {
-  return [...new Set(unusedVals(dice,used))].flatMap(v => {
-    const to = (c===WHITE?25-v:v)-1;
-    return to>=0&&to<24&&canLand(board,to,c) ? [{from:'bar',to,dieValue:v}] : [];
+const movesFromBar = (board,dice,used,c) =>
+  [...new Set(unusedVals(dice,used))].flatMap(v => {
+    const to=(c===WHITE?25-v:v)-1;
+    return to>=0&&to<24&&canLand(board,to,c)?[{from:'bar',to,dieValue:v}]:[];
   });
-};
 const movesFromPt = (board,bar,dice,used,c,from) => {
   if(bar[c]>0) return [];
   const pt=board[from]; if(!pt.color||pt.color!==c||!pt.count) return [];
@@ -215,21 +226,21 @@ const movesFromPt = (board,bar,dice,used,c,from) => {
   return moves;
 };
 const allMoves = (board,bar,dice,used,c) => {
-  const raw = bar[c]>0 ? movesFromBar(board,dice,used,c)
-    : Array.from({length:24},(_,i)=>i).flatMap(i=>movesFromPt(board,bar,dice,used,c,i));
+  const raw=bar[c]>0?movesFromBar(board,dice,used,c)
+    :Array.from({length:24},(_,i)=>i).flatMap(i=>movesFromPt(board,bar,dice,used,c,i));
   const seen=new Set();
   return raw.filter(m=>{ const k=`${m.from}-${m.to}-${m.dieValue}`; if(seen.has(k)) return false; seen.add(k); return true; });
 };
 const applyMove = (board,bar,borneOff,move,c,dice,used) => {
   const b=board.map(p=>({...p})), nb={...bar}, nbo={...borneOff}, opp=c===WHITE?BLACK:WHITE;
   let msg='';
-  if(move.from==='bar') { nb[c]=Math.max(0,nb[c]-1); msg=`${c==='white'?'W':'B'} バー→pt${idx2pt(move.to)}`; }
-  else { b[move.from]={...b[move.from],count:b[move.from].count-1}; if(!b[move.from].count) b[move.from].color=null; }
-  if(move.to==='bearoff') { nbo[c]++; msg=`${c==='white'?'W':'B'} pt${idx2pt(move.from)} ベアオフ`; }
-  else {
+  if(move.from==='bar'){nb[c]=Math.max(0,nb[c]-1);msg=`${c==='white'?'W':'B'} バー→pt${idx2pt(move.to)}`;}
+  else{b[move.from]={...b[move.from],count:b[move.from].count-1};if(!b[move.from].count)b[move.from].color=null;}
+  if(move.to==='bearoff'){nbo[c]++;msg=`${c==='white'?'W':'B'} pt${idx2pt(move.from)} ベアオフ`;}
+  else{
     const d=b[move.to];
-    if(d.color===opp&&d.count===1){ nb[opp]++; b[move.to]={color:c,count:1}; msg=`${c==='white'?'W':'B'} pt${idx2pt(move.to)} ヒット！`; }
-    else { b[move.to]={color:c,count:(d.color===c?d.count:0)+1}; if(!msg) msg=`${c==='white'?'W':'B'} ${move.from==='bar'?'bar':'pt'+idx2pt(move.from)}→pt${idx2pt(move.to)}`; }
+    if(d.color===opp&&d.count===1){nb[opp]++;b[move.to]={color:c,count:1};msg=`${c==='white'?'W':'B'} pt${idx2pt(move.to)} ヒット！`;}
+    else{b[move.to]={color:c,count:(d.color===c?d.count:0)+1};if(!msg)msg=`${c==='white'?'W':'B'} ${move.from==='bar'?'bar':'pt'+idx2pt(move.from)}→pt${idx2pt(move.to)}`;}
   }
   const nu=[...used];
   for(let i=0;i<dice.length;i++) if(dice[i]===move.dieValue&&!nu.includes(i)){nu.push(i);break;}
@@ -237,9 +248,78 @@ const applyMove = (board,bar,borneOff,move,c,dice,used) => {
 };
 const checkWinner = bo => bo.white===15?WHITE:bo.black===15?BLACK:null;
 
-/* ── COMPONENTS ── */
-const FACES = ['','⚀','⚁','⚂','⚃','⚄','⚅'];
+/* ── 遊び方モーダル ── */
+function HowToModal({onClose,theme}) {
+  const isCyber = theme==='cyber';
+  return (
+    <div className="modal-overlay" onClick={e=>e.target===e.currentTarget&&onClose()}>
+      <div className="modal-box">
+        <button className="modal-close" onClick={onClose}>✕</button>
+        <h2>🎲 遊び方</h2>
 
+        <h3>ゲームの目的</h3>
+        <p>自分の15枚のコマを全てゴール（ベアオフ）させたら勝ちです。</p>
+
+        <h3>基本の流れ</h3>
+        <ul>
+          <li>サイコロを2個振り、出た目の数だけコマを動かします。</li>
+          <li>ホワイトは24→1方向、ブラックは1→24方向に進みます。</li>
+          <li>2つの目は別々のコマに使っても、1つのコマに合算して使ってもOKです。</li>
+          <li>ゾロ目が出たら4回分動かせます。</li>
+        </ul>
+
+        <h3>ヒット</h3>
+        <ul>
+          <li>相手のコマが1枚だけのマス（ブロット）に乗ると、そのコマをバーへ送れます。</li>
+          <li>バーにコマがある間は、他のコマを動かせません。まずバーから入場させましょう。</li>
+        </ul>
+
+        <h3>ブロック</h3>
+        <p>相手のコマが2枚以上いるマスには入れません。6マス連続でブロックするとプライムと呼びます。</p>
+
+        <h3>ベアオフ（上がり）</h3>
+        <ul>
+          <li>自分の全コマがホームボード（白:1〜6pt、黒:19〜24pt）に入ったらベアオフ開始です。</li>
+          <li>ぴったりの目のコマを上げられます。</li>
+          <li>該当ポイントにコマがない場合、それより小さい目のコマを動かします。</li>
+          <li>一番後ろのコマだけは、超過した目でも上げられます。</li>
+        </ul>
+
+        <h3>操作方法</h3>
+        <ul>
+          <li>動かしたいコマをクリック → 移動先をクリック</li>
+          <li>黄色ハイライトが移動先の候補です</li>
+          <li>バーのコマはバー部分をクリックして選択できます</li>
+        </ul>
+
+        <div style={{marginTop:20,textAlign:'center'}}>
+          <button className="btn-primary" onClick={onClose} style={{padding:'8px 32px'}}>閉じる</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── CHECKER ICON ── */
+function CheckerIcon({color,theme,size=18}) {
+  const bg = color===WHITE
+    ? (theme==='cyber'?'#00FFEE':theme==='lofi'?'#D8C8A8':'#F5F0E0')
+    : (theme==='cyber'?'#FF44CC':theme==='lofi'?'#5A4838':'#3A1800');
+  const border = color===WHITE
+    ? (theme==='cyber'?'#fff':theme==='lofi'?'#A89878':'#8B3A10')
+    : (theme==='cyber'?'#fff':theme==='lofi'?'#9A8868':'#C4A24A');
+  return (
+    <span style={{
+      display:'inline-block', width:size, height:size,
+      borderRadius:'50%', background:bg,
+      border:`2px solid ${border}`,
+      verticalAlign:'middle', flexShrink:0,
+      boxShadow: theme==='cyber'?`0 0 6px ${bg}66`:undefined,
+    }}/>
+  );
+}
+
+/* ── COMPONENTS ── */
 function Checker({color,stacked,count}) {
   return <div className={`checker ${color}${stacked?' stacked':''}`}>{count>1?count:''}</div>;
 }
@@ -253,19 +333,16 @@ function PointCheckers({point,dir}) {
     </div>
   );
 }
-function BearOffPip({color,theme}) {
-  const bg = color===WHITE
-    ? (theme==='cyber'?'#00FFEE':theme==='lofi'?'#D8C8A8':'#F0E8C0')
-    : (theme==='cyber'?'#FF44CC':theme==='lofi'?'#5A4838':'#3A1800');
-  return <div style={{width:28,height:8,borderRadius:4,background:bg,opacity:.85}}/>;
-}
 function BearOffTray({color,count,theme}) {
+  const bg=color===WHITE?(theme==='cyber'?'#00FFEE':theme==='lofi'?'#D8C8A8':'#F0E8C0'):(theme==='cyber'?'#FF44CC':theme==='lofi'?'#5A4838':'#3A1800');
   return (
     <div className="bearoff-col">
       <div className="bearoff-label">{color===WHITE?'W':'B'}</div>
       <div className="bearoff-count">{count}</div>
       <div className="bearoff-pips">
-        {Array.from({length:Math.min(count,8)},(_,i)=><BearOffPip key={i} color={color} theme={theme}/>)}
+        {Array.from({length:Math.min(count,8)},(_,i)=>(
+          <div key={i} style={{width:28,height:8,borderRadius:4,background:bg,opacity:.8}}/>
+        ))}
         {count>8&&<div style={{fontSize:'0.6rem',opacity:.7}}>+{count-8}</div>}
       </div>
     </div>
@@ -273,28 +350,22 @@ function BearOffTray({color,count,theme}) {
 }
 
 function Board({gs,onPoint,onBar,legalMoves,barSelected,barDestSet,theme}) {
-  const {board,bar,borneOff,currentPlayer,selected} = gs;
-
-  const fromSet = useMemo(()=>{
+  const {board,bar,borneOff,currentPlayer,selected}=gs;
+  const fromSet=useMemo(()=>{
     if(barSelected) return new Set();
     const s=new Set(); legalMoves.forEach(m=>{if(m.from!=='bar')s.add(m.from);}); return s;
   },[legalMoves,barSelected]);
-
-  const toSet = useMemo(()=>{
+  const toSet=useMemo(()=>{
     if(barSelected) return barDestSet;
     if(selected===null) return new Set();
     const s=new Set(); legalMoves.filter(m=>m.from===selected).forEach(m=>{if(m.to!=='bearoff')s.add(m.to);}); return s;
   },[legalMoves,selected,barSelected,barDestSet]);
-
-  const hasBearOff = !barSelected&&selected!==null&&legalMoves.some(m=>m.from===selected&&m.to==='bearoff');
-  const barCanEnter = legalMoves.some(m=>m.from==='bar');
-
-  const topL=[12,13,14,15,16,17], topR=[18,19,20,21,22,23];
-  const botL=[11,10,9,8,7,6],     botR=[5,4,3,2,1,0];
-
-  const renderPt = (idx,dir) => {
-    const tc = idx%2===0?'tA':'tB';
-    const isSel=selected===idx, isFrom=!barSelected&&!selected&&fromSet.has(idx), isTo=toSet.has(idx);
+  const hasBearOff=!barSelected&&selected!==null&&legalMoves.some(m=>m.from===selected&&m.to==='bearoff');
+  const barCanEnter=legalMoves.some(m=>m.from==='bar');
+  const topL=[12,13,14,15,16,17],topR=[18,19,20,21,22,23],botL=[11,10,9,8,7,6],botR=[5,4,3,2,1,0];
+  const renderPt=(idx,dir)=>{
+    const tc=idx%2===0?'tA':'tB';
+    const isSel=selected===idx,isFrom=!barSelected&&!selected&&fromSet.has(idx),isTo=toSet.has(idx);
     return (
       <div key={idx} className="point-cell" onClick={()=>onPoint(idx)} title={`Point ${idx2pt(idx)}`}>
         <div className={`tri ${dir} ${tc}`}/>
@@ -304,10 +375,8 @@ function Board({gs,onPoint,onBar,legalMoves,barSelected,barDestSet,theme}) {
       </div>
     );
   };
-
-  const bearBg = active => active ? 'rgba(255,220,0,0.28)' : (theme==='cyber'?'#0A0520':theme==='lofi'?'#222018':'#9A7020');
-  const bearBorder = active => active ? '2px dashed rgba(255,220,50,0.9)' : '2px solid transparent';
-
+  const bearBg=active=>active?'rgba(255,220,0,0.28)':(theme==='cyber'?'#0A0520':theme==='lofi'?'#222018':'#9A7020');
+  const bearBorder=active=>active?'2px dashed rgba(255,220,50,0.9)':'2px solid transparent';
   return (
     <div className="board-shell">
       <div className="board-half">
@@ -315,9 +384,7 @@ function Board({gs,onPoint,onBar,legalMoves,barSelected,barDestSet,theme}) {
         <div className="mid-spacer" style={{width:52*6}}>· · ·</div>
         <div className="half-bot">{botL.map(i=>renderPt(i,'dn'))}</div>
       </div>
-
-      <div className={`bar-col${barCanEnter||barSelected?' can-enter':''}`} onClick={onBar}
-        style={barSelected?{opacity:.8}:{}} title="バー">
+      <div className={`bar-col${barCanEnter||barSelected?' can-enter':''}`} onClick={onBar} style={barSelected?{opacity:.8}:{}} title="バー">
         <div className="bar-section-top">
           <div className="bar-label">BAR</div>
           {bar.black>0&&<Checker color="black" count={bar.black}/>}
@@ -327,21 +394,17 @@ function Board({gs,onPoint,onBar,legalMoves,barSelected,barDestSet,theme}) {
           <div className="bar-label">BAR</div>
         </div>
       </div>
-
       <div className="board-half">
         <div className="half-top">{topR.map(i=>renderPt(i,'up'))}</div>
         <div className="mid-spacer" style={{width:52*6}}>· · ·</div>
         <div className="half-bot">{botR.map(i=>renderPt(i,'dn'))}</div>
       </div>
-
       <div style={{display:'flex',flexDirection:'column',gap:4,minWidth:52}}>
         <BearOffTray color={BLACK} count={borneOff.black} theme={theme}/>
-        <div style={{flex:1,borderRadius:4,cursor:hasBearOff&&currentPlayer===BLACK?'pointer':'default',background:bearBg(hasBearOff&&currentPlayer===BLACK),border:bearBorder(hasBearOff&&currentPlayer===BLACK),display:'flex',alignItems:'center',justifyContent:'center',fontSize:'0.6rem',transition:'all .15s'}}
-          onClick={()=>onPoint('bearoff')}>
+        <div style={{flex:1,borderRadius:4,cursor:hasBearOff&&currentPlayer===BLACK?'pointer':'default',background:bearBg(hasBearOff&&currentPlayer===BLACK),border:bearBorder(hasBearOff&&currentPlayer===BLACK),display:'flex',alignItems:'center',justifyContent:'center',fontSize:'0.6rem',transition:'all .15s'}} onClick={()=>onPoint('bearoff')}>
           {hasBearOff&&currentPlayer===BLACK?'↑OUT':''}
         </div>
-        <div style={{flex:1,borderRadius:4,cursor:hasBearOff&&currentPlayer===WHITE?'pointer':'default',background:bearBg(hasBearOff&&currentPlayer===WHITE),border:bearBorder(hasBearOff&&currentPlayer===WHITE),display:'flex',alignItems:'center',justifyContent:'center',fontSize:'0.6rem',transition:'all .15s'}}
-          onClick={()=>onPoint('bearoff')}>
+        <div style={{flex:1,borderRadius:4,cursor:hasBearOff&&currentPlayer===WHITE?'pointer':'default',background:bearBg(hasBearOff&&currentPlayer===WHITE),border:bearBorder(hasBearOff&&currentPlayer===WHITE),display:'flex',alignItems:'center',justifyContent:'center',fontSize:'0.6rem',transition:'all .15s'}} onClick={()=>onPoint('bearoff')}>
           {hasBearOff&&currentPlayer===WHITE?'↓OUT':''}
         </div>
         <BearOffTray color={WHITE} count={borneOff.white} theme={theme}/>
@@ -352,20 +415,20 @@ function Board({gs,onPoint,onBar,legalMoves,barSelected,barDestSet,theme}) {
 
 /* ── THEME PICKER ── */
 function ThemePicker({onStart}) {
-  const [sel,setSel] = useState('retro');
-  const t = THEMES[sel];
-
+  const [sel,setSel]=useState('retro');
+  const [showHow,setShowHow]=useState(false);
+  const accentColor = sel==='cyber'?'#00FFFF':sel==='lofi'?'#C8B898':'#8B3A10';
+  const fontFam = sel==='cyber'?'Courier New,monospace':sel==='retro'?'Georgia,serif':'Helvetica Neue,sans-serif';
   return (
     <div className="theme-screen">
+      {showHow&&<HowToModal onClose={()=>setShowHow(false)} theme={sel}/>}
       <div style={{textAlign:'center'}}>
-        <div style={{fontSize:'2rem',fontWeight:'bold',letterSpacing:4,
-          color:sel==='cyber'?'#00FFFF':sel==='lofi'?'#C8B898':'#8B3A10',
-          fontFamily:sel==='cyber'?'Courier New,monospace':sel==='retro'?'Georgia,serif':'inherit',
-          textShadow:sel==='cyber'?'0 0 14px #00FFFF':undefined,
-        }}>🎲 バックギャモン</div>
-        <div style={{fontSize:'0.85rem',opacity:.5,marginTop:6,letterSpacing:3,
-          color:sel==='cyber'?'#FF00FF':sel==='lofi'?'#888':'#8B3A10'}}>
-          {sel==='cyber'?'SELECT THEME — PRESS START':'テーマを選んでゲームスタート'}
+        {/* タイトル・サブタイトルを同色で統一 */}
+        <div style={{fontSize:'2rem',fontWeight:'bold',letterSpacing:4,color:accentColor,fontFamily:fontFam}}>
+          🎲 バックギャモン
+        </div>
+        <div style={{fontSize:'0.85rem',marginTop:6,letterSpacing:2,color:accentColor,opacity:0.6,fontFamily:fontFam}}>
+          テーマを選んでゲームスタート
         </div>
       </div>
 
@@ -373,28 +436,31 @@ function ThemePicker({onStart}) {
         {Object.values(THEMES).map(th=>(
           <div key={th.key} className={`theme-card${sel===th.key?' selected':''}`} onClick={()=>setSel(th.key)}
             style={{
-              background: th.key==='retro'?'#D4C090':th.key==='lofi'?'#28282F':'#080820',
-              color: th.key==='retro'?'#3A1800':th.key==='lofi'?'#C8B898':'#00FFFF',
-              borderColor: sel===th.key?(th.key==='retro'?'#8B3A10':th.key==='lofi'?'#7A8C6A':'#FF00FF'):'transparent',
-              boxShadow: sel===th.key&&th.key==='cyber'?'0 0 20px #FF00FF55':undefined,
+              background:th.key==='retro'?'#D4C090':th.key==='lofi'?'#28282F':'#080820',
+              color:th.key==='retro'?'#3A1800':th.key==='lofi'?'#C8B898':'#00FFFF',
+              borderColor:sel===th.key?(th.key==='retro'?'#8B3A10':th.key==='lofi'?'#7A8C6A':'#FF00FF'):'transparent',
+              boxShadow:sel===th.key&&th.key==='cyber'?'0 0 20px #FF00FF55':undefined,
+              fontFamily:th.key==='cyber'?'Courier New,monospace':th.key==='retro'?'Georgia,serif':'inherit',
             }}>
             <div className="theme-card-icon">{th.icon}</div>
-            <div className="theme-card-name" style={{fontFamily:th.key==='cyber'?'Courier New,monospace':th.key==='retro'?'Georgia,serif':'inherit'}}>{th.name}</div>
-            <div className="theme-card-desc">{th.desc.split('\n').map((l,i)=><div key={i}>{l}</div>)}</div>
-            <div className="theme-swatch">{th.swatches.map((c,i)=><div key={i} className="theme-swatch-dot" style={{background:c}}/>)}</div>
+            <div className="theme-card-name">{th.name}</div>
           </div>
         ))}
       </div>
 
       <button className="start-btn" onClick={()=>onStart(sel)} style={{
-        background: sel==='retro'?'#8B3A10':sel==='lofi'?'#7A8C6A':'#080820',
-        color: sel==='retro'?'#F5F0E0':sel==='lofi'?'#1E1E24':'#FF00FF',
-        border: sel==='cyber'?'1.5px solid #FF00FF':'none',
-        boxShadow: sel==='cyber'?'0 0 16px #FF00FF44':undefined,
-        fontFamily: sel==='cyber'?'Courier New,monospace':sel==='retro'?'Georgia,serif':'inherit',
-        letterSpacing: sel==='cyber'?4:2,
+        background:sel==='retro'?'#8B3A10':sel==='lofi'?'#7A8C6A':'#080820',
+        color:sel==='retro'?'#F5F0E0':sel==='lofi'?'#1E1E24':'#FF00FF',
+        border:sel==='cyber'?'1.5px solid #FF00FF':'none',
+        boxShadow:sel==='cyber'?'0 0 16px #FF00FF44':undefined,
+        fontFamily:fontFam,
       }}>
-        {sel==='cyber'?'[ GAME START ]':'ゲームスタート →'}
+        ゲームスタート →
+      </button>
+
+      {/* 遊び方ボタン */}
+      <button className="how-to-btn" onClick={()=>setShowHow(true)}>
+        遊び方を見る
       </button>
     </div>
   );
@@ -402,20 +468,21 @@ function ThemePicker({onStart}) {
 
 /* ── MAIN APP ── */
 function App() {
-  const [theme,setTheme] = useState(null);
-  const [gs,setGs] = useState({...INIT,board:mkBoard()});
+  const [theme,setTheme]=useState(null);
+  const [gs,setGs]=useState({...INIT,board:mkBoard()});
+  const [showHow,setShowHow]=useState(false);
 
-  const handleStart = useCallback(t=>{
-    document.body.className = THEMES[t].cls;
+  const handleStart=useCallback(t=>{
+    document.body.className=THEMES[t].cls;
     setTheme(t);
   },[]);
 
-  const legalMoves = useMemo(()=>{
+  const legalMoves=useMemo(()=>{
     if(gs.phase!=='move') return [];
     return allMoves(gs.board,gs.bar,gs.dice,gs.usedDice,gs.currentPlayer);
   },[gs]);
 
-  const handleRoll = useCallback(()=>{
+  const handleRoll=useCallback(()=>{
     if(gs.phase!=='roll') return;
     const dice=rollDice();
     const moves=allMoves(gs.board,gs.bar,dice,[],gs.currentPlayer);
@@ -427,16 +494,16 @@ function App() {
     }
   },[gs]);
 
-  const handleEndTurn = useCallback(()=>{
+  const handleEndTurn=useCallback(()=>{
     if(gs.phase!=='move') return;
     setGs(p=>({...p,currentPlayer:p.currentPlayer===WHITE?BLACK:WHITE,dice:[],usedDice:[],phase:'roll',selected:null}));
   },[gs]);
 
-  const doMove = useCallback(move=>{
+  const doMove=useCallback(move=>{
     const {board,bar,borneOff,usedDice,logMsg}=applyMove(gs.board,gs.bar,gs.borneOff,move,gs.currentPlayer,gs.dice,gs.usedDice);
     const winner=checkWinner(borneOff);
     const log=[logMsg,...gs.log.slice(0,29)];
-    if(winner){ setGs(p=>({...p,board,bar,borneOff,winner,phase:'gameover',selected:null,log:[`🏆 ${winner===WHITE?'ホワイト':'ブラック'}の勝ち！`,...log]})); return; }
+    if(winner){setGs(p=>({...p,board,bar,borneOff,winner,phase:'gameover',selected:null,log:[`🏆 ${winner===WHITE?'ホワイト':'ブラック'}の勝ち！`,...log]}));return;}
     const rem=allMoves(board,bar,gs.dice,usedDice,gs.currentPlayer);
     if(usedDice.length===gs.dice.length||!rem.length){
       setGs(p=>({...p,board,bar,borneOff,usedDice:[],currentPlayer:p.currentPlayer===WHITE?BLACK:WHITE,dice:[],phase:'roll',selected:null,log}));
@@ -445,7 +512,7 @@ function App() {
     }
   },[gs]);
 
-  const handlePoint = useCallback(idx=>{
+  const handlePoint=useCallback(idx=>{
     if(gs.phase!=='move') return;
     if(idx==='bearoff'){
       if(gs.selected===null) return;
@@ -454,69 +521,78 @@ function App() {
     }
     if(gs.selected!==null){
       const m=legalMoves.find(m=>m.from===gs.selected&&m.to===idx);
-      if(m){ doMove(m); return; }
+      if(m){doMove(m);return;}
       if(gs.board[idx].color===gs.currentPlayer&&gs.board[idx].count>0){
         const ok=legalMoves.some(m=>m.from===idx);
-        setGs(p=>({...p,selected:ok?idx:null})); return;
+        setGs(p=>({...p,selected:ok?idx:null}));return;
       }
-      setGs(p=>({...p,selected:null})); return;
+      setGs(p=>({...p,selected:null}));return;
     }
     if(gs.bar[gs.currentPlayer]>0) return;
     if(gs.board[idx].color!==gs.currentPlayer||!gs.board[idx].count) return;
     if(legalMoves.some(m=>m.from===idx)) setGs(p=>({...p,selected:idx}));
   },[gs,legalMoves,doMove]);
 
-  const handleBar = useCallback(()=>{
+  const handleBar=useCallback(()=>{
     if(gs.phase!=='move'||!gs.bar[gs.currentPlayer]) return;
     if(legalMoves.some(m=>m.from==='bar')) setGs(p=>({...p,selected:'bar'}));
   },[gs,legalMoves]);
 
-  const handleReset = ()=>{ setGs({...INIT,board:mkBoard()}); setTheme(null); document.body.className='t-retro'; };
+  const handleReset=()=>{setGs({...INIT,board:mkBoard()});setTheme(null);document.body.className='t-retro';};
 
-  const barSel = gs.selected==='bar';
-  const barDestSet = useMemo(()=>{
+  const barSel=gs.selected==='bar';
+  const barDestSet=useMemo(()=>{
     if(!barSel) return new Set();
     return new Set(legalMoves.filter(m=>m.from==='bar').map(m=>m.to));
   },[barSel,legalMoves]);
 
   if(!theme) return <ThemePicker onStart={handleStart}/>;
 
-  const canEnd = gs.phase==='move'&&!legalMoves.length;
-  const isCyber = theme==='cyber';
-  const isRetro = theme==='retro';
+  const canEnd=gs.phase==='move'&&!legalMoves.length;
+  const isCyber=theme==='cyber';
 
-  const plLabel = p => {
+  // プレイヤーラベル: コマアイコン付き
+  const plLabel=p=>{
     const isW=p===WHITE;
-    const nameW = isCyber?'CYAN':isRetro?'ホワイト':'ホワイト';
-    const nameB = isCyber?'PINK':isRetro?'ブラック':'ブラック';
-    return <span style={{color:isW?(isCyber?'#00FFEE':isRetro?'#8B3A10':'#D8C8A8'):(isCyber?'#FF44CC':isRetro?'#6A1800':'#C8704A'),fontWeight:'bold'}}>
-      {isW?'⬜':'⬛'} {isW?nameW:nameB}
-    </span>;
+    const nameW=isCyber?'CYAN':'ホワイト';
+    const nameB=isCyber?'PINK':'ブラック';
+    return (
+      <span style={{display:'inline-flex',alignItems:'center',gap:6,
+        color:isW?(isCyber?'#00FFEE':theme==='lofi'?'#D8C8A8':'#8B3A10'):(isCyber?'#FF44CC':theme==='lofi'?'#C8704A':'#3A1800'),
+        fontWeight:'bold'}}>
+        <CheckerIcon color={isW?WHITE:BLACK} theme={theme} size={20}/>
+        {isW?nameW:nameB}
+      </span>
+    );
   };
 
   let msg='';
-  if(gs.phase==='roll') msg=isCyber?'▶ ROLL DICE TO PROCEED':'サイコロを振ってください';
+  if(gs.phase==='roll') msg='サイコロを振ってください';
   else if(gs.phase==='move'){
     if(gs.bar[gs.currentPlayer]>0) msg=`バーのコマを入れてください（${gs.bar[gs.currentPlayer]}個）`;
     else if(barSel) msg='バーのコマ選択中 — 移動先を選んでください';
     else if(gs.selected!==null) msg=`pt${idx2pt(gs.selected)} 選択中 — 移動先を選んでください`;
-    else msg=isCyber?'▶ SELECT PIECE':'コマを選んで移動してください';
-    if(canEnd) msg=isCyber?'▶ NO MOVES — END TURN':'移動できる手がありません。ターン終了を押してください';
+    else msg='コマを選んで移動してください';
+    if(canEnd) msg='移動できる手がありません。ターン終了を押してください';
   }
 
   const boardGs={...gs,selected:barSel?null:gs.selected};
+  const fontFam=isCyber?'Courier New,monospace':theme==='retro'?'Georgia,serif':'inherit';
+  const titleColor=isCyber?'#00FFFF':theme==='retro'?'#8B3A10':'#C8B898';
 
   return (
     <div>
-      <h1 style={{marginBottom:10,fontSize:'1.4rem',letterSpacing:isCyber?6:3,
-        color:isCyber?'#00FFFF':isRetro?'#8B3A10':'#C8B898',
-        fontFamily:isCyber?'Courier New,monospace':isRetro?'Georgia,serif':'inherit',
-        textShadow:isCyber?'0 0 12px #00FFFF':undefined,
-      }}>🎲 バックギャモン</h1>
+      {showHow&&<HowToModal onClose={()=>setShowHow(false)} theme={theme}/>}
+
+      <h1 style={{marginBottom:10,fontSize:'1.4rem',letterSpacing:isCyber?6:3,color:titleColor,fontFamily:fontFam,textShadow:isCyber?'0 0 12px #00FFFF':undefined}}>
+        🎲 バックギャモン
+      </h1>
 
       <div className="status-bar">
         <div className="status-turn">
-          {gs.phase==='gameover'?<>{plLabel(gs.winner)} の勝利！🎉</>:<>現在のターン: {plLabel(gs.currentPlayer)}</>}
+          {gs.phase==='gameover'
+            ?<>{plLabel(gs.winner)} の勝利！🎉</>
+            :<>現在のターン: {plLabel(gs.currentPlayer)}</>}
         </div>
         <div className="status-msg">{msg}</div>
       </div>
@@ -526,19 +602,20 @@ function App() {
 
       <div className="dice-row">
         {gs.dice.length>0
-          ? gs.dice.map((v,i)=><div key={i} className={`die${gs.usedDice.includes(i)?' used':''}`}>{FACES[v]}</div>)
-          : <span style={{opacity:.35,fontSize:'.85rem'}}>{isCyber?'-- AWAITING ROLL --':'サイコロ待ち'}</span>}
+          ?gs.dice.map((v,i)=><div key={i} className={`die${gs.usedDice.includes(i)?' used':''}`}>{v}</div>)
+          :<span style={{opacity:.35,fontSize:'.85rem'}}>サイコロ待ち</span>}
       </div>
 
       <div className="btn-row">
-        <button className="btn-primary"   onClick={handleRoll}    disabled={gs.phase!=='roll'}>{isCyber?'[ ROLL ]':'🎲 サイコロを振る'}</button>
-        <button className="btn-secondary" onClick={handleEndTurn} disabled={!canEnd}>{isCyber?'[ END TURN ]':'ターン終了'}</button>
-        <button className="btn-danger"    onClick={handleReset}>{isCyber?'[ RESET ]':'🔄 テーマ選択に戻る'}</button>
+        <button className="btn-primary"   onClick={handleRoll}      disabled={gs.phase!=='roll'}>🎲 サイコロを振る</button>
+        <button className="btn-secondary" onClick={handleEndTurn}   disabled={!canEnd}>ターン終了</button>
+        <button className="btn-secondary" onClick={()=>setShowHow(true)} style={{opacity:.8}}>遊び方</button>
+        <button className="btn-danger"    onClick={handleReset}>テーマ選択に戻る</button>
       </div>
 
       <div className="log">
         {gs.log.map((e,i)=><div key={i} className="log-entry">{e}</div>)}
-        {!gs.log.length&&<span style={{opacity:.35}}>{isCyber?'-- LOG --':'ゲームログ'}</span>}
+        {!gs.log.length&&<span style={{opacity:.35}}>ゲームログ</span>}
       </div>
 
       {gs.winner&&(
@@ -546,7 +623,7 @@ function App() {
           <div className="winner-box">
             <h2>{gs.winner===WHITE?'ホワイト':'ブラック'} の勝利！🎉</h2>
             <p>おめでとうございます！</p>
-            <button className="btn-primary" onClick={handleReset}>{isCyber?'[ PLAY AGAIN ]':'もう一度プレイ'}</button>
+            <button className="btn-primary" onClick={handleReset} style={{marginRight:10}}>もう一度プレイ</button>
           </div>
         </div>
       )}
