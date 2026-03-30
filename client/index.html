@@ -473,13 +473,13 @@ function App() {
 
   const handleReset = ()=>{ setGs({...INIT,board:mkBoard()}); setTheme(null); document.body.className='t-retro'; };
 
-  if(!theme) return <ThemePicker onStart={handleStart}/>;
-
   const barSel = gs.selected==='bar';
   const barDestSet = useMemo(()=>{
     if(!barSel) return new Set();
     return new Set(legalMoves.filter(m=>m.from==='bar').map(m=>m.to));
   },[barSel,legalMoves]);
+
+  if(!theme) return <ThemePicker onStart={handleStart}/>;
 
   const canEnd = gs.phase==='move'&&!legalMoves.length;
   const isCyber = theme==='cyber';
