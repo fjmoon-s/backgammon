@@ -17,14 +17,24 @@ body { min-height: 100vh; display: flex; flex-direction: column; align-items: ce
 .pt-selected { background: rgba(255,210,0,0.45); }
 /* 移動先ハイライト: テーマ別にCSSで上書き */
 .pt-highlight { background: rgba(255,255,255,0.16); }
-.pt-num { position: absolute; left: 0; right: 0; text-align: center; font-size: 0.72rem; font-weight: bold; z-index: 12; pointer-events: none; background: rgba(0,0,0,0.5); color: #fff !important; line-height: 1.7; }
-.pt-num.up { bottom: 0; border-radius: 0 0 2px 2px; }
-.pt-num.dn { top: 0; border-radius: 2px 2px 0 0; }
+/* 数字: デフォルト（lofi/cyber）は白文字+黒影 */
+.pt-num { position: absolute; left: 0; right: 0; text-align: center; font-size: 0.62rem; font-weight: bold; z-index: 12; pointer-events: none; letter-spacing: 0.5px; }
+/* 上段の数字は三角の先端（下端）に配置 → コマと被らない */
+.pt-num.up { bottom: 6px; color: rgba(255,255,255,0.95); text-shadow: 0 1px 3px rgba(0,0,0,1), 0 0 6px rgba(0,0,0,0.9); }
+/* 下段の数字は三角の先端（上端）に配置 → コマと被らない */
+.pt-num.dn { top: 6px;    color: rgba(255,255,255,0.95); text-shadow: 0 1px 3px rgba(0,0,0,1), 0 0 6px rgba(0,0,0,0.9); }
+/* retro: ボードが明るいのでダーク文字 */
+body.t-retro .pt-num.up { color: rgba(60,20,0,0.95) !important; text-shadow: 0 1px 2px rgba(255,220,150,1) !important; }
+body.t-retro .pt-num.dn { color: rgba(60,20,0,0.95) !important; text-shadow: 0 1px 2px rgba(255,220,150,1) !important; }
+/* コマを数字と被らないよう、数字分の余白を確保 */
 .checkers-up { position: absolute; top: 4px; left: 0; right: 0; display: flex; flex-direction: column; align-items: center; gap: 0; z-index: 10; }
 .checkers-dn { position: absolute; bottom: 4px; left: 0; right: 0; display: flex; flex-direction: column-reverse; align-items: center; gap: 0; z-index: 10; }
-.checker { width: 42px; height: 42px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.72rem; font-weight: bold; flex-shrink: 0; cursor: pointer; transition: transform 0.1s; position: relative; z-index: 10; }
+.checker { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.72rem; font-weight: bold; flex-shrink: 0; cursor: pointer; transition: transform 0.1s; position: relative; z-index: 10; margin: 0; }
 .checker:hover { transform: scale(1.08); }
-.checker.stacked { width: 38px; height: 38px; margin-top: -8px; margin-bottom: -8px; }
+/* up方向: 2枚目以降は重ねる */
+.checkers-up .checker.stacked { margin-top: -6px; }
+/* dn方向: column-reverseのため、2枚目以降のmargin-topが「下方向への重なり」として機能 */
+.checkers-dn .checker.stacked { margin-top: -6px; }
 .board-shell { display: flex; flex-direction: row; align-items: stretch; gap: 4px; padding: 4px; border-radius: 6px; }
 .board-half { display: flex; flex-direction: column; }
 .half-top, .half-bot { display: flex; flex-direction: row; }
@@ -375,16 +385,24 @@ function HowToModal({onClose,theme}) {
 }
 
 /* ── CHECKER / POINT ── */
-function Checker({color,stacked,count}) {
-  return <div className={`checker ${color}${stacked?' stacked':''}`}>{count>1?count:''}</div>;
+function Checker({color,count}) {
+  return <div className={`checker ${color}`}>{count>1?count:''}</div>;
 }
 function PointCheckers({point,dir}) {
   if(!point.color||!point.count)return null;
   const show=Math.min(point.count,5);
   return (
     <div className={dir==='up'?'checkers-up':'checkers-dn'}>
-      {Array.from({length:show},(_,i)=><Checker key={i} color={point.color} stacked={i>0} count={i===show-1&&point.count>5?point.count:''}/>)}
-      {point.count>5&&<div style={{fontSize:'0.7rem',fontWeight:'bold',zIndex:11,position:'relative',opacity:.9}}>×{point.count}</div>}
+      {Array.from({length:show},(_,i)=>(
+        <Checker key={i} color={point.color}
+          count={i===show-1&&point.count>5?point.count:''}/>
+      ))}
+      {point.count>5&&(
+        <div style={{fontSize:'0.68rem',fontWeight:'bold',zIndex:11,position:'relative',
+          color:'rgba(255,255,255,0.9)',textShadow:'0 1px 3px rgba(0,0,0,0.9)',marginTop:2}}>
+          ×{point.count}
+        </div>
+      )}
     </div>
   );
 }
