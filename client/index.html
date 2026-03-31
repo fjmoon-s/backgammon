@@ -14,8 +14,9 @@ body { min-height: 100vh; display: flex; flex-direction: column; align-items: ce
 .point-cell { position: relative; width: 52px; height: 192px; cursor: pointer; overflow: visible; }
 .tri { position: absolute; width: 0; height: 0; border-left: 26px solid transparent; border-right: 26px solid transparent; pointer-events: none; }
 .pt-overlay { position: absolute; inset: 0; z-index: 5; pointer-events: none; border-radius: 2px; }
+.pt-selected { background: rgba(255,210,0,0.45); }
+/* 移動先ハイライト: テーマ別にCSSで上書き */
 .pt-highlight { background: rgba(255,255,255,0.16); }
-.pt-selected  { background: rgba(255,220,0,0.30); }
 .pt-num { position: absolute; left: 0; right: 0; text-align: center; font-size: 0.58rem; z-index: 6; pointer-events: none; opacity: 0.5; }
 .pt-num.up { bottom: 2px; } .pt-num.dn { top: 2px; }
 .checkers-up { position: absolute; top: 4px; left: 0; right: 0; display: flex; flex-direction: column; align-items: center; gap: 1px; z-index: 10; }
@@ -34,10 +35,22 @@ body { min-height: 100vh; display: flex; flex-direction: column; align-items: ce
 .bearoff-col { width: 48px; display: flex; flex-direction: column; align-items: center; border-radius: 3px; padding: 4px 2px; gap: 2px; }
 .bearoff-label { font-size: 0.58rem; } .bearoff-count { font-size: 1.1rem; font-weight: bold; }
 .bearoff-pips { display: flex; flex-direction: column; align-items: center; gap: 2px; flex: 1; justify-content: flex-start; width: 100%; }
-.dice-row { display: flex; gap: 10px; align-items: center; justify-content: center; margin: 10px 0; flex-wrap: wrap; }
-/* サイコロ: 数字表示に統一（絵文字より視認性高い） */
-.die { width: 46px; height: 46px; border-radius: 9px; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; font-weight: 900; transition: opacity 0.25s; letter-spacing: 0; }
-.die.used { opacity: 0.22; }
+
+/* ── サイコロ ── */
+.dice-row { display: flex; gap: 12px; align-items: center; justify-content: center; margin: 10px 0; flex-wrap: wrap; }
+.die-wrap { transition: opacity 0.25s; }
+.die-wrap.used { opacity: 0.22; }
+/* roll animation */
+@keyframes dieRoll {
+  0%   { transform: rotate(0deg) scale(1); }
+  20%  { transform: rotate(-18deg) scale(1.15); }
+  40%  { transform: rotate(22deg) scale(0.92); }
+  60%  { transform: rotate(-14deg) scale(1.1); }
+  80%  { transform: rotate(10deg) scale(0.96); }
+  100% { transform: rotate(0deg) scale(1); }
+}
+.die-wrap.rolling { animation: dieRoll 0.45s ease-out; }
+
 .status-bar { border-radius: 8px; padding: 10px 24px; margin-bottom: 10px; text-align: center; width: 100%; max-width: 780px; }
 .status-turn { font-size: 1rem; font-weight: bold; } .status-msg { font-size: 0.82rem; margin-top: 3px; min-height: 1.2em; opacity: 0.7; }
 .btn-row { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 6px; }
@@ -49,7 +62,7 @@ button:disabled { opacity: 0.3; cursor: not-allowed; }
 .winner-box { border-radius: 14px; padding: 44px 64px; text-align: center; }
 .winner-box h2 { font-size: 2rem; margin-bottom: 10px; } .winner-box p { margin-bottom: 28px; opacity: 0.7; }
 
-/* ── モーダル（遊び方） ── */
+/* ── モーダル ── */
 .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.75); display: flex; align-items: center; justify-content: center; z-index: 200; padding: 16px; }
 .modal-box { border-radius: 12px; padding: 32px 36px; max-width: 520px; width: 100%; max-height: 80vh; overflow-y: auto; position: relative; }
 .modal-box h2 { font-size: 1.3rem; font-weight: bold; margin-bottom: 18px; }
@@ -60,7 +73,7 @@ button:disabled { opacity: 0.3; cursor: not-allowed; }
 .modal-close:hover { opacity: 1; }
 
 /* ── theme picker ── */
-.theme-screen { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 24px; padding: 32px; }
+.theme-screen { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 24px; padding: 32px; background: #EDE0B8; }
 .theme-cards { display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; }
 .theme-card { width: 180px; border-radius: 12px; padding: 24px 16px; text-align: center; cursor: pointer; transition: transform 0.18s, box-shadow 0.18s; border: 2px solid transparent; }
 .theme-card:hover { transform: translateY(-6px); }
@@ -68,7 +81,7 @@ button:disabled { opacity: 0.3; cursor: not-allowed; }
 .theme-card-name { font-size: 1rem; font-weight: bold; letter-spacing: 2px; }
 .start-btn { padding: 14px 48px; font-size: 1rem; font-weight: bold; border: none; border-radius: 8px; cursor: pointer; letter-spacing: 2px; transition: opacity 0.2s, transform 0.15s; }
 .start-btn:hover { transform: scale(1.04); opacity: 0.9; }
-.how-to-btn { background: none; border: 1px solid currentColor; border-radius: 6px; padding: 8px 24px; font-size: 0.85rem; cursor: pointer; opacity: 0.6; letter-spacing: 1px; transition: opacity 0.2s; font-weight: normal; }
+.how-to-btn { background: none; border: 1px solid #8B3A10; border-radius: 6px; padding: 8px 24px; font-size: 0.85rem; cursor: pointer; opacity: 0.6; letter-spacing: 1px; transition: opacity 0.2s; font-weight: normal; color: #8B3A10; font-family: Georgia, serif; }
 .how-to-btn:hover { opacity: 1; }
 
 /* ══ RETRO ══ */
@@ -78,7 +91,6 @@ body.t-retro .status-turn { color: #8B3A10; }
 body.t-retro .log { background: #D4C090; border: 1px solid #C4A24A; color: #5A3010; }
 body.t-retro .winner-box { background: #EDE0B8; border: 3px solid #8B3A10; }
 body.t-retro .winner-box h2 { color: #8B3A10; }
-body.t-retro .die { background: #F5F0E0; color: #3A1800; border: 2px solid #8B3A10; box-shadow: 3px 3px 0 #8B3A10; border-radius: 6px; }
 body.t-retro .board-shell { background: #C4A24A; border: 4px solid #8B3A10; }
 body.t-retro .mid-spacer { background: #9A7020; color: #C4A24A; }
 body.t-retro .bar-col { background: #8B3A10; } .t-retro .bar-col.can-enter { background: #B05020; }
@@ -91,13 +103,13 @@ body.t-retro .tri.dn.tA { border-bottom: 186px solid #8B3A10; }
 body.t-retro .tri.dn.tB { border-bottom: 186px solid #E8C840; }
 body.t-retro .checker.white { background: #F5F0E0; border: 3px solid #8B3A10; color: #3A1800; }
 body.t-retro .checker.black { background: #3A1800; border: 3px solid #C4A24A; color: #FFD700; }
+body.t-retro .pt-highlight { background: rgba(0,180,255,0.35); }
 body.t-retro .btn-primary   { background: #8B3A10; color: #F5F0E0; }
 body.t-retro .btn-secondary { background: #C4A24A; color: #3A1800; }
 body.t-retro .btn-danger    { background: #5A2A18; color: #F5F0E0; }
 body.t-retro button:hover:not(:disabled) { opacity: 0.82; }
 body.t-retro .modal-box { background: #EDE0B8; border: 2px solid #8B3A10; color: #3A1800; }
 body.t-retro .modal-close { color: #3A1800; }
-body.t-retro .how-to-btn { color: #8B3A10; border-color: #8B3A10; }
 
 /* ══ LOFI ══ */
 body.t-lofi { background: #1E1E24; color: #C8B898; font-family: 'Helvetica Neue', sans-serif; }
@@ -106,8 +118,6 @@ body.t-lofi .status-turn { color: #D8C8A8; }
 body.t-lofi .log { background: #28282F; border: 1px solid #3A3A4A; color: #888; }
 body.t-lofi .winner-box { background: #2C2C34; border: 1px solid #7A8C6A; }
 body.t-lofi .winner-box h2 { color: #B8D898; }
-/* lofi dice: 明るい背景に濃い数字で視認性確保 */
-body.t-lofi .die { background: #E8D8B8; color: #2A1800; border: 1px solid #7A8C6A; border-radius: 6px; }
 body.t-lofi .board-shell { background: #3A3028; border: 3px solid #4A4A3A; }
 body.t-lofi .mid-spacer { background: #2A2018; color: #5A5A4A; }
 body.t-lofi .bar-col { background: #2A2018; } .t-lofi .bar-col.can-enter { background: #4A4038; }
@@ -120,13 +130,14 @@ body.t-lofi .tri.dn.tA { border-bottom: 186px solid #7A8C6A; }
 body.t-lofi .tri.dn.tB { border-bottom: 186px solid #C8704A; }
 body.t-lofi .checker.white { background: #D8C8A8; border: 2px solid #A89878; color: #2A1800; }
 body.t-lofi .checker.black { background: #5A4838; border: 2px solid #9A8868; color: #E8D8B8; }
+body.t-lofi .pt-highlight { background: rgba(80,220,160,0.40); }
 body.t-lofi .btn-primary   { background: #7A8C6A; color: #1E1E24; }
 body.t-lofi .btn-secondary { background: #3A3028; color: #C8B898; border: 1px solid #5A5A4A; }
 body.t-lofi .btn-danger    { background: #4A2A1A; color: #D8C8A8; border: 1px solid #6A4A3A; }
 body.t-lofi button:hover:not(:disabled) { opacity: 0.80; }
 body.t-lofi .modal-box { background: #2C2C34; border: 1px solid #4A4A5A; color: #C8B898; }
 body.t-lofi .modal-close { color: #C8B898; }
-body.t-lofi .how-to-btn { color: #C8B898; border-color: #4A4A5A; }
+body.t-lofi .how-to-btn { color: #C8B898; border-color: #4A4A5A; font-family: inherit; }
 
 /* ══ CYBER ══ */
 body.t-cyber { background: #050510; color: #00FFFF; font-family: 'Courier New', monospace; }
@@ -135,8 +146,6 @@ body.t-cyber .status-turn { color: #00FFFF; letter-spacing: 2px; }
 body.t-cyber .log { background: #080820; border: 1px solid #FF00FF44; color: #00FFFF88; border-radius: 2px; }
 body.t-cyber .winner-box { background: #080820; border: 2px solid #FF00FF; border-radius: 4px; }
 body.t-cyber .winner-box h2 { color: #FF00FF; letter-spacing: 3px; }
-/* cyber dice: 白背景に黒数字で目が確実に読める */
-body.t-cyber .die { background: #EEFFFF; color: #000; border: 2px solid #00FFFF; border-radius: 2px; box-shadow: 0 0 8px #00FFFF66; }
 body.t-cyber .board-shell { background: #050510; border: 2px solid #FF00FF55; border-radius: 2px; box-shadow: 0 0 24px #FF00FF22; }
 body.t-cyber .mid-spacer { background: #0A0520; color: #00FFFF33; }
 body.t-cyber .bar-col { background: #0A0520; } .t-cyber .bar-col.can-enter { background: #160840; }
@@ -150,6 +159,7 @@ body.t-cyber .tri.dn.tA { border-bottom: 186px solid #006688; }
 body.t-cyber .tri.dn.tB { border-bottom: 186px solid #770055; }
 body.t-cyber .checker.white { background: #00FFEE; border: 2px solid #FFFFFF; color: #000; box-shadow: 0 0 10px #00FFEE88; }
 body.t-cyber .checker.black { background: #FF44CC; border: 2px solid #FFFFFF; color: #000; box-shadow: 0 0 10px #FF44CC88; }
+body.t-cyber .pt-highlight { background: rgba(255,255,0,0.35); }
 body.t-cyber .btn-primary   { background: #080820; color: #FF00FF; border: 1.5px solid #FF00FF; border-radius: 2px; letter-spacing: 2px; box-shadow: 0 0 8px #FF00FF44; }
 body.t-cyber .btn-secondary { background: #080820; color: #00FFFF; border: 1.5px solid #00FFFF44; border-radius: 2px; }
 body.t-cyber .btn-danger    { background: #080820; color: #FF6666; border: 1.5px solid #FF444466; border-radius: 2px; }
@@ -158,13 +168,13 @@ body.t-cyber h1 { letter-spacing: 6px; }
 body.t-cyber .modal-box { background: #080820; border: 1.5px solid #00FFFF; border-radius: 4px; color: #00FFFF; }
 body.t-cyber .modal-box h3 { color: #FF00FF; }
 body.t-cyber .modal-close { color: #00FFFF; }
-body.t-cyber .how-to-btn { color: #00FFFF; border-color: #00FFFF44; border-radius: 2px; }
+body.t-cyber .how-to-btn { color: #00FFFF; border-color: #00FFFF44; border-radius: 2px; font-family: 'Courier New', monospace; }
 </style>
 </head>
 <body class="t-retro">
 <div id="root"></div>
 <script type="text/babel">
-const { useState, useCallback, useMemo } = React;
+const { useState, useCallback, useMemo, useEffect, useRef } = React;
 
 /* ── THEMES ── */
 const THEMES = {
@@ -174,92 +184,146 @@ const THEMES = {
 };
 
 /* ── GAME CONSTANTS ── */
-const WHITE = 'white', BLACK = 'black';
-const mkBoard = () => {
-  const b = Array.from({length:24}, () => ({color:null,count:0}));
+const WHITE='white', BLACK='black';
+const mkBoard=()=>{
+  const b=Array.from({length:24},()=>({color:null,count:0}));
   b[23]={color:WHITE,count:2}; b[12]={color:WHITE,count:5};
   b[7] ={color:WHITE,count:3}; b[5] ={color:WHITE,count:5};
   b[0] ={color:BLACK,count:2}; b[11]={color:BLACK,count:5};
   b[16]={color:BLACK,count:3}; b[18]={color:BLACK,count:5};
   return b;
 };
-const INIT = {board:mkBoard(),bar:{white:0,black:0},borneOff:{white:0,black:0},currentPlayer:WHITE,dice:[],usedDice:[],phase:'roll',selected:null,winner:null,log:[]};
+const INIT={board:mkBoard(),bar:{white:0,black:0},borneOff:{white:0,black:0},currentPlayer:WHITE,dice:[],usedDice:[],phase:'roll',selected:null,winner:null,log:[]};
 
 /* ── GAME LOGIC ── */
-const idx2pt = i => i+1;
-const rollDice = () => { const a=~~(Math.random()*6)+1,b=~~(Math.random()*6)+1; return a===b?[a,a,a,a]:[a,b]; };
-const isInHome = (i,c) => c===WHITE ? i<=5 : i>=18;
-const allInHome = (board,bar,c) => {
-  if(bar[c]>0) return false;
-  for(let i=0;i<24;i++) if(board[i].color===c&&board[i].count>0&&!isInHome(i,c)) return false;
+const idx2pt=i=>i+1;
+const rollDice=()=>{const a=~~(Math.random()*6)+1,b=~~(Math.random()*6)+1;return a===b?[a,a,a,a]:[a,b];};
+const isInHome=(i,c)=>c===WHITE?i<=5:i>=18;
+const allInHome=(board,bar,c)=>{
+  if(bar[c]>0)return false;
+  for(let i=0;i<24;i++)if(board[i].color===c&&board[i].count>0&&!isInHome(i,c))return false;
   return true;
 };
-const canLand = (board,to,c) => { const p=board[to]; return !p.color||p.color===c||p.count===1; };
-const unusedVals = (dice,used) => {
-  const cp=[...used], r=[];
-  for(let i=0;i<dice.length;i++){ const p=cp.indexOf(i); if(p===-1) r.push(dice[i]); else cp.splice(p,1); }
+const canLand=(board,to,c)=>{const p=board[to];return !p.color||p.color===c||p.count===1;};
+const unusedVals=(dice,used)=>{
+  const cp=[...used],r=[];
+  for(let i=0;i<dice.length;i++){const p=cp.indexOf(i);if(p===-1)r.push(dice[i]);else cp.splice(p,1);}
   return r;
 };
-const hasHigher = (board,from,c) => {
-  if(c===WHITE){ for(let i=from+1;i<=5;i++) if(board[i].color===WHITE&&board[i].count>0) return true; }
-  else { for(let i=from-1;i>=18;i--) if(board[i].color===BLACK&&board[i].count>0) return true; }
+const hasHigher=(board,from,c)=>{
+  if(c===WHITE){for(let i=from+1;i<=5;i++)if(board[i].color===WHITE&&board[i].count>0)return true;}
+  else{for(let i=from-1;i>=18;i--)if(board[i].color===BLACK&&board[i].count>0)return true;}
   return false;
 };
-const movesFromBar = (board,dice,used,c) =>
-  [...new Set(unusedVals(dice,used))].flatMap(v => {
+const movesFromBar=(board,dice,used,c)=>
+  [...new Set(unusedVals(dice,used))].flatMap(v=>{
     const to=(c===WHITE?25-v:v)-1;
     return to>=0&&to<24&&canLand(board,to,c)?[{from:'bar',to,dieValue:v}]:[];
   });
-const movesFromPt = (board,bar,dice,used,c,from) => {
-  if(bar[c]>0) return [];
-  const pt=board[from]; if(!pt.color||pt.color!==c||!pt.count) return [];
-  const bearOk=allInHome(board,bar,c), dir=c===WHITE?-1:1, moves=[];
-  for(const v of [...new Set(unusedVals(dice,used))]) {
+const movesFromPt=(board,bar,dice,used,c,from)=>{
+  if(bar[c]>0)return[];
+  const pt=board[from];if(!pt.color||pt.color!==c||!pt.count)return[];
+  const bearOk=allInHome(board,bar,c),dir=c===WHITE?-1:1,moves=[];
+  for(const v of[...new Set(unusedVals(dice,used))]){
     const to=from+dir*v;
-    if(to>=0&&to<24) { if(canLand(board,to,c)) moves.push({from,to,dieValue:v}); }
-    else if(bearOk) {
+    if(to>=0&&to<24){if(canLand(board,to,c))moves.push({from,to,dieValue:v});}
+    else if(bearOk){
       const hp=c===WHITE?idx2pt(from):(25-idx2pt(from));
-      if(hp===v) moves.push({from,to:'bearoff',dieValue:v});
-      else if(hp<v&&!hasHigher(board,from,c)) moves.push({from,to:'bearoff',dieValue:v});
+      if(hp===v)moves.push({from,to:'bearoff',dieValue:v});
+      else if(hp<v&&!hasHigher(board,from,c))moves.push({from,to:'bearoff',dieValue:v});
     }
   }
   return moves;
 };
-const allMoves = (board,bar,dice,used,c) => {
+const allMoves=(board,bar,dice,used,c)=>{
   const raw=bar[c]>0?movesFromBar(board,dice,used,c)
     :Array.from({length:24},(_,i)=>i).flatMap(i=>movesFromPt(board,bar,dice,used,c,i));
   const seen=new Set();
-  return raw.filter(m=>{ const k=`${m.from}-${m.to}-${m.dieValue}`; if(seen.has(k)) return false; seen.add(k); return true; });
+  return raw.filter(m=>{const k=`${m.from}-${m.to}-${m.dieValue}`;if(seen.has(k))return false;seen.add(k);return true;});
 };
-const applyMove = (board,bar,borneOff,move,c,dice,used) => {
-  const b=board.map(p=>({...p})), nb={...bar}, nbo={...borneOff}, opp=c===WHITE?BLACK:WHITE;
+const applyMove=(board,bar,borneOff,move,c,dice,used,theme)=>{
+  const b=board.map(p=>({...p})),nb={...bar},nbo={...borneOff},opp=c===WHITE?BLACK:WHITE;
+  // テーマに応じたプレイヤー名
+  const pName=(col)=>{
+    if(theme==='cyber') return col===WHITE?'シアン':'ピンク';
+    return col===WHITE?'W':'B';
+  };
   let msg='';
-  if(move.from==='bar'){nb[c]=Math.max(0,nb[c]-1);msg=`${c==='white'?'W':'B'} バー→pt${idx2pt(move.to)}`;}
+  if(move.from==='bar'){nb[c]=Math.max(0,nb[c]-1);msg=`${pName(c)} バー→pt${idx2pt(move.to)}`;}
   else{b[move.from]={...b[move.from],count:b[move.from].count-1};if(!b[move.from].count)b[move.from].color=null;}
-  if(move.to==='bearoff'){nbo[c]++;msg=`${c==='white'?'W':'B'} pt${idx2pt(move.from)} ベアオフ`;}
+  if(move.to==='bearoff'){nbo[c]++;msg=`${pName(c)} pt${idx2pt(move.from)} ベアオフ`;}
   else{
     const d=b[move.to];
-    if(d.color===opp&&d.count===1){nb[opp]++;b[move.to]={color:c,count:1};msg=`${c==='white'?'W':'B'} pt${idx2pt(move.to)} ヒット！`;}
-    else{b[move.to]={color:c,count:(d.color===c?d.count:0)+1};if(!msg)msg=`${c==='white'?'W':'B'} ${move.from==='bar'?'bar':'pt'+idx2pt(move.from)}→pt${idx2pt(move.to)}`;}
+    if(d.color===opp&&d.count===1){nb[opp]++;b[move.to]={color:c,count:1};msg=`${pName(c)} pt${idx2pt(move.to)} ヒット！`;}
+    else{b[move.to]={color:c,count:(d.color===c?d.count:0)+1};if(!msg)msg=`${pName(c)} ${move.from==='bar'?'bar':'pt'+idx2pt(move.from)}→pt${idx2pt(move.to)}`;}
   }
   const nu=[...used];
-  for(let i=0;i<dice.length;i++) if(dice[i]===move.dieValue&&!nu.includes(i)){nu.push(i);break;}
+  for(let i=0;i<dice.length;i++)if(dice[i]===move.dieValue&&!nu.includes(i)){nu.push(i);break;}
   return {board:b,bar:nb,borneOff:nbo,usedDice:nu,logMsg:msg};
 };
-const checkWinner = bo => bo.white===15?WHITE:bo.black===15?BLACK:null;
+const checkWinner=bo=>bo.white===15?WHITE:bo.black===15?BLACK:null;
+
+/* ── SVGサイコロ ── */
+// ドット座標定義
+const DOT_POSITIONS = {
+  1: [[50,50]],
+  2: [[25,25],[75,75]],
+  3: [[25,25],[50,50],[75,75]],
+  4: [[25,25],[75,25],[25,75],[75,75]],
+  5: [[25,25],[75,25],[50,50],[25,75],[75,75]],
+  6: [[25,22],[75,22],[25,50],[75,50],[25,78],[75,78]],
+};
+
+function DieSVG({value, theme, rolling}) {
+  // テーマ別スタイル
+  const styles = {
+    retro: { bg:'#F5F0E0', border:'#8B3A10', dot:'#3A1800', shadow:'3px 3px 0 #8B3A10', radius:8 },
+    lofi:  { bg:'#E8D8B8', border:'#7A8C6A', dot:'#2A1800', shadow:'none',              radius:6 },
+    cyber: { bg:'#EEFFFF', border:'#00FFFF', dot:'#003344', shadow:'0 0 8px #00FFFF66', radius:2 },
+  };
+  const s = styles[theme] || styles.retro;
+  const dots = DOT_POSITIONS[value] || [];
+  return (
+    <svg width="46" height="46" viewBox="0 0 100 100"
+      style={{
+        borderRadius: s.radius,
+        boxShadow: s.shadow,
+        border: `2px solid ${s.border}`,
+        display: 'block',
+        background: s.bg,
+      }}>
+      <rect x="0" y="0" width="100" height="100" fill={s.bg} rx={s.radius}/>
+      {dots.map(([cx,cy],i)=>(
+        <circle key={i} cx={cx} cy={cy} r="10" fill={s.dot}/>
+      ))}
+    </svg>
+  );
+}
+
+function DieWrap({value, used, theme, rolling}) {
+  return (
+    <div className={`die-wrap${used?' used':''}${rolling?' rolling':''}`}>
+      <DieSVG value={value} theme={theme} rolling={rolling}/>
+    </div>
+  );
+}
+
+/* ── コマアイコン ── */
+function CheckerIcon({color,theme,size=20}) {
+  const bg=color===WHITE?(theme==='cyber'?'#00FFEE':theme==='lofi'?'#D8C8A8':'#F5F0E0'):(theme==='cyber'?'#FF44CC':theme==='lofi'?'#5A4838':'#3A1800');
+  const border=color===WHITE?(theme==='cyber'?'#fff':theme==='lofi'?'#A89878':'#8B3A10'):(theme==='cyber'?'#fff':theme==='lofi'?'#9A8868':'#C4A24A');
+  return <span style={{display:'inline-block',width:size,height:size,borderRadius:'50%',background:bg,border:`2px solid ${border}`,verticalAlign:'middle',flexShrink:0,boxShadow:theme==='cyber'?`0 0 6px ${bg}66`:undefined}}/>;
+}
 
 /* ── 遊び方モーダル ── */
 function HowToModal({onClose,theme}) {
-  const isCyber = theme==='cyber';
   return (
     <div className="modal-overlay" onClick={e=>e.target===e.currentTarget&&onClose()}>
       <div className="modal-box">
         <button className="modal-close" onClick={onClose}>✕</button>
         <h2>🎲 遊び方</h2>
-
         <h3>ゲームの目的</h3>
         <p>自分の15枚のコマを全てゴール（ベアオフ）させたら勝ちです。</p>
-
         <h3>基本の流れ</h3>
         <ul>
           <li>サイコロを2個振り、出た目の数だけコマを動かします。</li>
@@ -267,16 +331,13 @@ function HowToModal({onClose,theme}) {
           <li>2つの目は別々のコマに使っても、1つのコマに合算して使ってもOKです。</li>
           <li>ゾロ目が出たら4回分動かせます。</li>
         </ul>
-
         <h3>ヒット</h3>
         <ul>
           <li>相手のコマが1枚だけのマス（ブロット）に乗ると、そのコマをバーへ送れます。</li>
           <li>バーにコマがある間は、他のコマを動かせません。まずバーから入場させましょう。</li>
         </ul>
-
         <h3>ブロック</h3>
         <p>相手のコマが2枚以上いるマスには入れません。6マス連続でブロックするとプライムと呼びます。</p>
-
         <h3>ベアオフ（上がり）</h3>
         <ul>
           <li>自分の全コマがホームボード（白:1〜6pt、黒:19〜24pt）に入ったらベアオフ開始です。</li>
@@ -284,14 +345,11 @@ function HowToModal({onClose,theme}) {
           <li>該当ポイントにコマがない場合、それより小さい目のコマを動かします。</li>
           <li>一番後ろのコマだけは、超過した目でも上げられます。</li>
         </ul>
-
         <h3>操作方法</h3>
         <ul>
-          <li>動かしたいコマをクリック → 移動先をクリック</li>
-          <li>黄色ハイライトが移動先の候補です</li>
+          <li>動かしたいコマをクリック → 移動先をクリック（明るいハイライトで表示）</li>
           <li>バーのコマはバー部分をクリックして選択できます</li>
         </ul>
-
         <div style={{marginTop:20,textAlign:'center'}}>
           <button className="btn-primary" onClick={onClose} style={{padding:'8px 32px'}}>閉じる</button>
         </div>
@@ -300,31 +358,12 @@ function HowToModal({onClose,theme}) {
   );
 }
 
-/* ── CHECKER ICON ── */
-function CheckerIcon({color,theme,size=18}) {
-  const bg = color===WHITE
-    ? (theme==='cyber'?'#00FFEE':theme==='lofi'?'#D8C8A8':'#F5F0E0')
-    : (theme==='cyber'?'#FF44CC':theme==='lofi'?'#5A4838':'#3A1800');
-  const border = color===WHITE
-    ? (theme==='cyber'?'#fff':theme==='lofi'?'#A89878':'#8B3A10')
-    : (theme==='cyber'?'#fff':theme==='lofi'?'#9A8868':'#C4A24A');
-  return (
-    <span style={{
-      display:'inline-block', width:size, height:size,
-      borderRadius:'50%', background:bg,
-      border:`2px solid ${border}`,
-      verticalAlign:'middle', flexShrink:0,
-      boxShadow: theme==='cyber'?`0 0 6px ${bg}66`:undefined,
-    }}/>
-  );
-}
-
-/* ── COMPONENTS ── */
+/* ── CHECKER / POINT ── */
 function Checker({color,stacked,count}) {
   return <div className={`checker ${color}${stacked?' stacked':''}`}>{count>1?count:''}</div>;
 }
 function PointCheckers({point,dir}) {
-  if(!point.color||!point.count) return null;
+  if(!point.color||!point.count)return null;
   const show=Math.min(point.count,5);
   return (
     <div className={dir==='up'?'checkers-up':'checkers-dn'}>
@@ -340,25 +379,24 @@ function BearOffTray({color,count,theme}) {
       <div className="bearoff-label">{color===WHITE?'W':'B'}</div>
       <div className="bearoff-count">{count}</div>
       <div className="bearoff-pips">
-        {Array.from({length:Math.min(count,8)},(_,i)=>(
-          <div key={i} style={{width:28,height:8,borderRadius:4,background:bg,opacity:.8}}/>
-        ))}
+        {Array.from({length:Math.min(count,8)},(_,i)=><div key={i} style={{width:28,height:8,borderRadius:4,background:bg,opacity:.8}}/>)}
         {count>8&&<div style={{fontSize:'0.6rem',opacity:.7}}>+{count-8}</div>}
       </div>
     </div>
   );
 }
 
+/* ── BOARD ── */
 function Board({gs,onPoint,onBar,legalMoves,barSelected,barDestSet,theme}) {
   const {board,bar,borneOff,currentPlayer,selected}=gs;
   const fromSet=useMemo(()=>{
-    if(barSelected) return new Set();
-    const s=new Set(); legalMoves.forEach(m=>{if(m.from!=='bar')s.add(m.from);}); return s;
+    if(barSelected)return new Set();
+    const s=new Set();legalMoves.forEach(m=>{if(m.from!=='bar')s.add(m.from);});return s;
   },[legalMoves,barSelected]);
   const toSet=useMemo(()=>{
-    if(barSelected) return barDestSet;
-    if(selected===null) return new Set();
-    const s=new Set(); legalMoves.filter(m=>m.from===selected).forEach(m=>{if(m.to!=='bearoff')s.add(m.to);}); return s;
+    if(barSelected)return barDestSet;
+    if(selected===null)return new Set();
+    const s=new Set();legalMoves.filter(m=>m.from===selected).forEach(m=>{if(m.to!=='bearoff')s.add(m.to);});return s;
   },[legalMoves,selected,barSelected,barDestSet]);
   const hasBearOff=!barSelected&&selected!==null&&legalMoves.some(m=>m.from===selected&&m.to==='bearoff');
   const barCanEnter=legalMoves.some(m=>m.from==='bar');
@@ -375,7 +413,7 @@ function Board({gs,onPoint,onBar,legalMoves,barSelected,barDestSet,theme}) {
       </div>
     );
   };
-  const bearBg=active=>active?'rgba(255,220,0,0.28)':(theme==='cyber'?'#0A0520':theme==='lofi'?'#222018':'#9A7020');
+  const bearBg=active=>active?'rgba(255,220,0,0.35)':(theme==='cyber'?'#0A0520':theme==='lofi'?'#222018':'#9A7020');
   const bearBorder=active=>active?'2px dashed rgba(255,220,50,0.9)':'2px solid transparent';
   return (
     <div className="board-shell">
@@ -417,17 +455,15 @@ function Board({gs,onPoint,onBar,legalMoves,barSelected,barDestSet,theme}) {
 function ThemePicker({onStart}) {
   const [sel,setSel]=useState('retro');
   const [showHow,setShowHow]=useState(false);
-  const accentColor = sel==='cyber'?'#00FFFF':sel==='lofi'?'#C8B898':'#8B3A10';
-  const fontFam = sel==='cyber'?'Courier New,monospace':sel==='retro'?'Georgia,serif':'Helvetica Neue,sans-serif';
+  // タイトル・サブタイトル・ボタン類は常にレトロ固定
   return (
     <div className="theme-screen">
-      {showHow&&<HowToModal onClose={()=>setShowHow(false)} theme={sel}/>}
+      {showHow&&<HowToModal onClose={()=>setShowHow(false)} theme="retro"/>}
       <div style={{textAlign:'center'}}>
-        {/* タイトル・サブタイトルを同色で統一 */}
-        <div style={{fontSize:'2rem',fontWeight:'bold',letterSpacing:4,color:accentColor,fontFamily:fontFam}}>
+        <div style={{fontSize:'2rem',fontWeight:'bold',letterSpacing:4,color:'#8B3A10',fontFamily:'Georgia,serif'}}>
           🎲 バックギャモン
         </div>
-        <div style={{fontSize:'0.85rem',marginTop:6,letterSpacing:2,color:accentColor,opacity:0.6,fontFamily:fontFam}}>
+        <div style={{fontSize:'0.85rem',marginTop:6,letterSpacing:2,color:'#8B3A10',opacity:0.65,fontFamily:'Georgia,serif'}}>
           テーマを選んでゲームスタート
         </div>
       </div>
@@ -448,17 +484,12 @@ function ThemePicker({onStart}) {
         ))}
       </div>
 
-      <button className="start-btn" onClick={()=>onStart(sel)} style={{
-        background:sel==='retro'?'#8B3A10':sel==='lofi'?'#7A8C6A':'#080820',
-        color:sel==='retro'?'#F5F0E0':sel==='lofi'?'#1E1E24':'#FF00FF',
-        border:sel==='cyber'?'1.5px solid #FF00FF':'none',
-        boxShadow:sel==='cyber'?'0 0 16px #FF00FF44':undefined,
-        fontFamily:fontFam,
-      }}>
+      {/* ゲームスタートボタン: 常にレトロ */}
+      <button className="start-btn" onClick={()=>onStart(sel)}
+        style={{background:'#8B3A10',color:'#F5F0E0',fontFamily:'Georgia,serif',letterSpacing:2,border:'none'}}>
         ゲームスタート →
       </button>
 
-      {/* 遊び方ボタン */}
       <button className="how-to-btn" onClick={()=>setShowHow(true)}>
         遊び方を見る
       </button>
@@ -471,6 +502,7 @@ function App() {
   const [theme,setTheme]=useState(null);
   const [gs,setGs]=useState({...INIT,board:mkBoard()});
   const [showHow,setShowHow]=useState(false);
+  const [rollingDice,setRollingDice]=useState([]); // rolling中のdiceインデックス
 
   const handleStart=useCallback(t=>{
     document.body.className=THEMES[t].cls;
@@ -478,46 +510,53 @@ function App() {
   },[]);
 
   const legalMoves=useMemo(()=>{
-    if(gs.phase!=='move') return [];
+    if(gs.phase!=='move')return[];
     return allMoves(gs.board,gs.bar,gs.dice,gs.usedDice,gs.currentPlayer);
   },[gs]);
 
   const handleRoll=useCallback(()=>{
-    if(gs.phase!=='roll') return;
+    if(gs.phase!=='roll')return;
     const dice=rollDice();
+    // アニメーション開始
+    const indices=dice.map((_,i)=>i);
+    setRollingDice(indices);
+    setTimeout(()=>setRollingDice([]),500);
+
     const moves=allMoves(gs.board,gs.bar,dice,[],gs.currentPlayer);
-    const log=[`${gs.currentPlayer===WHITE?'ホワイト':'ブラック'}: [${dice.join(', ')}]`,...gs.log.slice(0,29)];
+    const pName=(c)=>theme==='cyber'?(c===WHITE?'シアン':'ピンク'):(c===WHITE?'ホワイト':'ブラック');
+    const log=[`${pName(gs.currentPlayer)}: [${dice.join(', ')}]`,...gs.log.slice(0,29)];
     if(!moves.length){
       setGs(p=>({...p,dice,usedDice:dice.map((_,i)=>i),phase:'roll',currentPlayer:p.currentPlayer===WHITE?BLACK:WHITE,selected:null,log:['手なし → スキップ',...log]}));
     } else {
       setGs(p=>({...p,dice,usedDice:[],phase:'move',selected:null,log}));
     }
-  },[gs]);
+  },[gs,theme]);
 
   const handleEndTurn=useCallback(()=>{
-    if(gs.phase!=='move') return;
+    if(gs.phase!=='move')return;
     setGs(p=>({...p,currentPlayer:p.currentPlayer===WHITE?BLACK:WHITE,dice:[],usedDice:[],phase:'roll',selected:null}));
   },[gs]);
 
   const doMove=useCallback(move=>{
-    const {board,bar,borneOff,usedDice,logMsg}=applyMove(gs.board,gs.bar,gs.borneOff,move,gs.currentPlayer,gs.dice,gs.usedDice);
+    const {board,bar,borneOff,usedDice,logMsg}=applyMove(gs.board,gs.bar,gs.borneOff,move,gs.currentPlayer,gs.dice,gs.usedDice,theme);
     const winner=checkWinner(borneOff);
     const log=[logMsg,...gs.log.slice(0,29)];
-    if(winner){setGs(p=>({...p,board,bar,borneOff,winner,phase:'gameover',selected:null,log:[`🏆 ${winner===WHITE?'ホワイト':'ブラック'}の勝ち！`,...log]}));return;}
+    const pName=(c)=>theme==='cyber'?(c===WHITE?'シアン':'ピンク'):(c===WHITE?'ホワイト':'ブラック');
+    if(winner){setGs(p=>({...p,board,bar,borneOff,winner,phase:'gameover',selected:null,log:[`🏆 ${pName(winner)}の勝ち！`,...log]}));return;}
     const rem=allMoves(board,bar,gs.dice,usedDice,gs.currentPlayer);
     if(usedDice.length===gs.dice.length||!rem.length){
       setGs(p=>({...p,board,bar,borneOff,usedDice:[],currentPlayer:p.currentPlayer===WHITE?BLACK:WHITE,dice:[],phase:'roll',selected:null,log}));
     } else {
       setGs(p=>({...p,board,bar,borneOff,usedDice,selected:null,log}));
     }
-  },[gs]);
+  },[gs,theme]);
 
   const handlePoint=useCallback(idx=>{
-    if(gs.phase!=='move') return;
+    if(gs.phase!=='move')return;
     if(idx==='bearoff'){
-      if(gs.selected===null) return;
+      if(gs.selected===null)return;
       const m=legalMoves.find(m=>m.from===gs.selected&&m.to==='bearoff');
-      if(m) doMove(m); return;
+      if(m)doMove(m);return;
     }
     if(gs.selected!==null){
       const m=legalMoves.find(m=>m.from===gs.selected&&m.to===idx);
@@ -528,52 +567,51 @@ function App() {
       }
       setGs(p=>({...p,selected:null}));return;
     }
-    if(gs.bar[gs.currentPlayer]>0) return;
-    if(gs.board[idx].color!==gs.currentPlayer||!gs.board[idx].count) return;
-    if(legalMoves.some(m=>m.from===idx)) setGs(p=>({...p,selected:idx}));
+    if(gs.bar[gs.currentPlayer]>0)return;
+    if(gs.board[idx].color!==gs.currentPlayer||!gs.board[idx].count)return;
+    if(legalMoves.some(m=>m.from===idx))setGs(p=>({...p,selected:idx}));
   },[gs,legalMoves,doMove]);
 
   const handleBar=useCallback(()=>{
-    if(gs.phase!=='move'||!gs.bar[gs.currentPlayer]) return;
-    if(legalMoves.some(m=>m.from==='bar')) setGs(p=>({...p,selected:'bar'}));
+    if(gs.phase!=='move'||!gs.bar[gs.currentPlayer])return;
+    if(legalMoves.some(m=>m.from==='bar'))setGs(p=>({...p,selected:'bar'}));
   },[gs,legalMoves]);
 
   const handleReset=()=>{setGs({...INIT,board:mkBoard()});setTheme(null);document.body.className='t-retro';};
 
   const barSel=gs.selected==='bar';
   const barDestSet=useMemo(()=>{
-    if(!barSel) return new Set();
+    if(!barSel)return new Set();
     return new Set(legalMoves.filter(m=>m.from==='bar').map(m=>m.to));
   },[barSel,legalMoves]);
 
-  if(!theme) return <ThemePicker onStart={handleStart}/>;
+  if(!theme)return <ThemePicker onStart={handleStart}/>;
 
   const canEnd=gs.phase==='move'&&!legalMoves.length;
   const isCyber=theme==='cyber';
 
-  // プレイヤーラベル: コマアイコン付き
+  const pName=(c)=>isCyber?(c===WHITE?'シアン':'ピンク'):(c===WHITE?'ホワイト':'ブラック');
+
   const plLabel=p=>{
     const isW=p===WHITE;
-    const nameW=isCyber?'CYAN':'ホワイト';
-    const nameB=isCyber?'PINK':'ブラック';
     return (
       <span style={{display:'inline-flex',alignItems:'center',gap:6,
         color:isW?(isCyber?'#00FFEE':theme==='lofi'?'#D8C8A8':'#8B3A10'):(isCyber?'#FF44CC':theme==='lofi'?'#C8704A':'#3A1800'),
         fontWeight:'bold'}}>
         <CheckerIcon color={isW?WHITE:BLACK} theme={theme} size={20}/>
-        {isW?nameW:nameB}
+        {pName(p)}
       </span>
     );
   };
 
   let msg='';
-  if(gs.phase==='roll') msg='サイコロを振ってください';
+  if(gs.phase==='roll')msg='サイコロを振ってください';
   else if(gs.phase==='move'){
-    if(gs.bar[gs.currentPlayer]>0) msg=`バーのコマを入れてください（${gs.bar[gs.currentPlayer]}個）`;
-    else if(barSel) msg='バーのコマ選択中 — 移動先を選んでください';
-    else if(gs.selected!==null) msg=`pt${idx2pt(gs.selected)} 選択中 — 移動先を選んでください`;
+    if(gs.bar[gs.currentPlayer]>0)msg=`バーのコマを入れてください（${gs.bar[gs.currentPlayer]}個）`;
+    else if(barSel)msg='バーのコマ選択中 — 移動先を選んでください';
+    else if(gs.selected!==null)msg=`pt${idx2pt(gs.selected)} 選択中 — 移動先を選んでください`;
     else msg='コマを選んで移動してください';
-    if(canEnd) msg='移動できる手がありません。ターン終了を押してください';
+    if(canEnd)msg='移動できる手がありません。ターン終了を押してください';
   }
 
   const boardGs={...gs,selected:barSel?null:gs.selected};
@@ -583,47 +621,40 @@ function App() {
   return (
     <div>
       {showHow&&<HowToModal onClose={()=>setShowHow(false)} theme={theme}/>}
-
       <h1 style={{marginBottom:10,fontSize:'1.4rem',letterSpacing:isCyber?6:3,color:titleColor,fontFamily:fontFam,textShadow:isCyber?'0 0 12px #00FFFF':undefined}}>
         🎲 バックギャモン
       </h1>
-
       <div className="status-bar">
         <div className="status-turn">
-          {gs.phase==='gameover'
-            ?<>{plLabel(gs.winner)} の勝利！🎉</>
-            :<>現在のターン: {plLabel(gs.currentPlayer)}</>}
+          {gs.phase==='gameover'?<>{plLabel(gs.winner)} の勝利！🎉</>:<>現在のターン: {plLabel(gs.currentPlayer)}</>}
         </div>
         <div className="status-msg">{msg}</div>
       </div>
-
       <Board gs={boardGs} onPoint={handlePoint} onBar={handleBar}
         legalMoves={legalMoves} barSelected={barSel} barDestSet={barDestSet} theme={theme}/>
-
       <div className="dice-row">
         {gs.dice.length>0
-          ?gs.dice.map((v,i)=><div key={i} className={`die${gs.usedDice.includes(i)?' used':''}`}>{v}</div>)
+          ?gs.dice.map((v,i)=>(
+            <DieWrap key={i} value={v} used={gs.usedDice.includes(i)} theme={theme} rolling={rollingDice.includes(i)}/>
+          ))
           :<span style={{opacity:.35,fontSize:'.85rem'}}>サイコロ待ち</span>}
       </div>
-
       <div className="btn-row">
-        <button className="btn-primary"   onClick={handleRoll}      disabled={gs.phase!=='roll'}>🎲 サイコロを振る</button>
-        <button className="btn-secondary" onClick={handleEndTurn}   disabled={!canEnd}>ターン終了</button>
+        <button className="btn-primary"   onClick={handleRoll}    disabled={gs.phase!=='roll'}>🎲 サイコロを振る</button>
+        <button className="btn-secondary" onClick={handleEndTurn} disabled={!canEnd}>ターン終了</button>
         <button className="btn-secondary" onClick={()=>setShowHow(true)} style={{opacity:.8}}>遊び方</button>
         <button className="btn-danger"    onClick={handleReset}>テーマ選択に戻る</button>
       </div>
-
       <div className="log">
         {gs.log.map((e,i)=><div key={i} className="log-entry">{e}</div>)}
         {!gs.log.length&&<span style={{opacity:.35}}>ゲームログ</span>}
       </div>
-
       {gs.winner&&(
         <div className="overlay">
           <div className="winner-box">
-            <h2>{gs.winner===WHITE?'ホワイト':'ブラック'} の勝利！🎉</h2>
+            <h2>{pName(gs.winner)} の勝利！🎉</h2>
             <p>おめでとうございます！</p>
-            <button className="btn-primary" onClick={handleReset} style={{marginRight:10}}>もう一度プレイ</button>
+            <button className="btn-primary" onClick={handleReset}>もう一度プレイ</button>
           </div>
         </div>
       )}
