@@ -20,21 +20,20 @@ body { min-height: 100vh; display: flex; flex-direction: column; align-items: ce
 /* 数字: デフォルト（lofi/cyber）は白文字+黒影 */
 .pt-num { position: absolute; left: 0; right: 0; text-align: center; font-size: 0.62rem; font-weight: bold; z-index: 12; pointer-events: none; letter-spacing: 0.5px; }
 /* 上段の数字は三角の先端（下端）に配置 → コマと被らない */
-.pt-num.up { bottom: 6px; color: rgba(255,255,255,0.95); text-shadow: 0 1px 3px rgba(0,0,0,1), 0 0 6px rgba(0,0,0,0.9); }
+.pt-num.up { bottom: 4px; color: rgba(255,255,255,0.95); text-shadow: 0 1px 3px rgba(0,0,0,1), 0 0 6px rgba(0,0,0,0.9); }
 /* 下段の数字は三角の先端（上端）に配置 → コマと被らない */
-.pt-num.dn { top: 6px;    color: rgba(255,255,255,0.95); text-shadow: 0 1px 3px rgba(0,0,0,1), 0 0 6px rgba(0,0,0,0.9); }
+.pt-num.dn { top: 4px; color: rgba(255,255,255,0.95); text-shadow: 0 1px 3px rgba(0,0,0,1), 0 0 6px rgba(0,0,0,0.9); }
 /* retro: ボードが明るいのでダーク文字 */
 body.t-retro .pt-num.up { color: rgba(60,20,0,0.95) !important; text-shadow: 0 1px 2px rgba(255,220,150,1) !important; }
 body.t-retro .pt-num.dn { color: rgba(60,20,0,0.95) !important; text-shadow: 0 1px 2px rgba(255,220,150,1) !important; }
-/* コマを数字と被らないよう、数字分の余白を確保 */
+/* コマ: 数字の外側（先端より遠い側）から積み重ねる */
 .checkers-up { position: absolute; top: 4px; left: 0; right: 0; display: flex; flex-direction: column; align-items: center; gap: 0; z-index: 10; }
 .checkers-dn { position: absolute; bottom: 4px; left: 0; right: 0; display: flex; flex-direction: column-reverse; align-items: center; gap: 0; z-index: 10; }
-.checker { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.72rem; font-weight: bold; flex-shrink: 0; cursor: pointer; transition: transform 0.1s; position: relative; z-index: 10; margin: 0; }
+.checker { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.72rem; font-weight: bold; flex-shrink: 0; cursor: pointer; transition: transform 0.1s; position: relative; z-index: 10; }
 .checker:hover { transform: scale(1.08); }
-/* up方向: 2枚目以降は重ねる */
-.checkers-up .checker.stacked { margin-top: -6px; }
-/* dn方向: column-reverseのため、2枚目以降のmargin-topが「下方向への重なり」として機能 */
-.checkers-dn .checker.stacked { margin-top: -6px; }
+/* 2枚目以降は -14px 重ねる（5枚で約154px → 三角192pxに収まり先端に余白）*/
+.checkers-up .checker + .checker { margin-top: -14px; }
+.checkers-dn .checker + .checker { margin-top: -14px; }
 .board-shell { display: flex; flex-direction: row; align-items: stretch; gap: 4px; padding: 4px; border-radius: 6px; }
 .board-half { display: flex; flex-direction: column; }
 .half-top, .half-bot { display: flex; flex-direction: row; }
