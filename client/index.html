@@ -31,9 +31,9 @@ body.t-retro .pt-num.dn { color: rgba(60,20,0,0.95) !important; text-shadow: 0 1
 .checkers-dn { position: absolute; bottom: 4px; left: 0; right: 0; display: flex; flex-direction: column-reverse; align-items: center; gap: 0; z-index: 10; }
 .checker { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.72rem; font-weight: bold; flex-shrink: 0; cursor: pointer; transition: transform 0.1s; position: relative; z-index: 10; }
 .checker:hover { transform: scale(1.08); }
-/* 2枚目以降は -14px 重ねる（5枚で約154px → 三角192pxに収まり先端に余白）*/
-.checkers-up .checker + .checker { margin-top: -14px; }
-.checkers-dn .checker + .checker { margin-top: -14px; }
+/* 2枚目以降の重なりはJSX側でinline styleで制御 */
+.checkers-up .checker + .checker { }
+.checkers-dn .checker + .checker { }
 .board-shell { display: flex; flex-direction: row; align-items: stretch; gap: 4px; padding: 4px; border-radius: 6px; }
 .board-half { display: flex; flex-direction: column; }
 .half-top, .half-bot { display: flex; flex-direction: row; }
@@ -384,8 +384,15 @@ function HowToModal({onClose,theme}) {
 }
 
 /* ── CHECKER / POINT ── */
-function Checker({color,count}) {
-  return <div className={`checker ${color}`}>{count>1?count:''}</div>;
+function Checker({color,count,overlapDir}) {
+  let style = undefined;
+  if(overlapDir==='up') style = {marginTop: '-14px'};
+  if(overlapDir==='dn') style = {marginBottom: '-14px'};
+  return (
+    <div className={`checker ${color}`} style={style}>
+      {count>1?count:''}
+    </div>
+  );
 }
 function PointCheckers({point,dir}) {
   if(!point.color||!point.count)return null;
@@ -394,6 +401,7 @@ function PointCheckers({point,dir}) {
     <div className={dir==='up'?'checkers-up':'checkers-dn'}>
       {Array.from({length:show},(_,i)=>(
         <Checker key={i} color={point.color}
+          overlapDir={i>0 ? dir : undefined}
           count={i===show-1&&point.count>5?point.count:''}/>
       ))}
       {point.count>5&&(
