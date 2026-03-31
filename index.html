@@ -17,13 +17,14 @@ body { min-height: 100vh; display: flex; flex-direction: column; align-items: ce
 .pt-selected { background: rgba(255,210,0,0.45); }
 /* 移動先ハイライト: テーマ別にCSSで上書き */
 .pt-highlight { background: rgba(255,255,255,0.16); }
-.pt-num { position: absolute; left: 0; right: 0; text-align: center; font-size: 0.58rem; z-index: 6; pointer-events: none; opacity: 0.5; }
-.pt-num.up { bottom: 2px; } .pt-num.dn { top: 2px; }
-.checkers-up { position: absolute; top: 4px; left: 0; right: 0; display: flex; flex-direction: column; align-items: center; gap: 1px; z-index: 10; }
-.checkers-dn { position: absolute; bottom: 4px; left: 0; right: 0; display: flex; flex-direction: column-reverse; align-items: center; gap: 1px; z-index: 10; }
+.pt-num { position: absolute; left: 0; right: 0; text-align: center; font-size: 0.72rem; font-weight: bold; z-index: 12; pointer-events: none; background: rgba(0,0,0,0.5); color: #fff !important; line-height: 1.7; }
+.pt-num.up { bottom: 0; border-radius: 0 0 2px 2px; }
+.pt-num.dn { top: 0; border-radius: 2px 2px 0 0; }
+.checkers-up { position: absolute; top: 4px; left: 0; right: 0; display: flex; flex-direction: column; align-items: center; gap: 0; z-index: 10; }
+.checkers-dn { position: absolute; bottom: 4px; left: 0; right: 0; display: flex; flex-direction: column-reverse; align-items: center; gap: 0; z-index: 10; }
 .checker { width: 42px; height: 42px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.72rem; font-weight: bold; flex-shrink: 0; cursor: pointer; transition: transform 0.1s; position: relative; z-index: 10; }
 .checker:hover { transform: scale(1.08); }
-.checker.stacked { width: 38px; height: 38px; margin-top: -10px; }
+.checker.stacked { width: 38px; height: 38px; margin-top: -8px; margin-bottom: -8px; }
 .board-shell { display: flex; flex-direction: row; align-items: stretch; gap: 4px; padding: 4px; border-radius: 6px; }
 .board-half { display: flex; flex-direction: column; }
 .half-top, .half-bot { display: flex; flex-direction: row; }
@@ -50,6 +51,18 @@ body { min-height: 100vh; display: flex; flex-direction: column; align-items: ce
   100% { transform: rotate(0deg) scale(1); }
 }
 .die-wrap.rolling { animation: dieRoll 0.45s ease-out; }
+/* ゾロ目バナー */
+@keyframes doubletPop {
+  0%   { opacity:0; transform: scale(0.5) translateY(-10px); }
+  40%  { opacity:1; transform: scale(1.15) translateY(0); }
+  70%  { transform: scale(0.95); }
+  100% { opacity:1; transform: scale(1); }
+}
+.doublet-badge {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 1rem; font-weight: bold; padding: 4px 14px;
+  border-radius: 20px; animation: doubletPop 0.5s ease-out forwards;
+}
 
 .status-bar { border-radius: 8px; padding: 10px 24px; margin-bottom: 10px; text-align: center; width: 100%; max-width: 780px; }
 .status-turn { font-size: 1rem; font-weight: bold; } .status-msg { font-size: 0.82rem; margin-top: 3px; min-height: 1.2em; opacity: 0.7; }
@@ -110,6 +123,7 @@ body.t-retro .btn-danger    { background: #5A2A18; color: #F5F0E0; }
 body.t-retro button:hover:not(:disabled) { opacity: 0.82; }
 body.t-retro .modal-box { background: #EDE0B8; border: 2px solid #8B3A10; color: #3A1800; }
 body.t-retro .modal-close { color: #3A1800; }
+body.t-retro .doublet-badge { background: #8B3A10; color: #F5F0E0; border: 2px solid #C4A24A; }
 
 /* ══ LOFI ══ */
 body.t-lofi { background: #1E1E24; color: #C8B898; font-family: 'Helvetica Neue', sans-serif; }
@@ -138,6 +152,7 @@ body.t-lofi button:hover:not(:disabled) { opacity: 0.80; }
 body.t-lofi .modal-box { background: #2C2C34; border: 1px solid #4A4A5A; color: #C8B898; }
 body.t-lofi .modal-close { color: #C8B898; }
 body.t-lofi .how-to-btn { color: #C8B898; border-color: #4A4A5A; font-family: inherit; }
+body.t-lofi .doublet-badge { background: #7A8C6A; color: #1E1E24; border: 1px solid #B8D898; }
 
 /* ══ CYBER ══ */
 body.t-cyber { background: #050510; color: #00FFFF; font-family: 'Courier New', monospace; }
@@ -169,6 +184,7 @@ body.t-cyber .modal-box { background: #080820; border: 1.5px solid #00FFFF; bord
 body.t-cyber .modal-box h3 { color: #FF00FF; }
 body.t-cyber .modal-close { color: #00FFFF; }
 body.t-cyber .how-to-btn { color: #00FFFF; border-color: #00FFFF44; border-radius: 2px; font-family: 'Courier New', monospace; }
+body.t-cyber .doublet-badge { background: #080820; color: #FFFF00; border: 1.5px solid #FFFF00; box-shadow: 0 0 12px #FFFF0066; border-radius: 2px; }
 </style>
 </head>
 <body class="t-retro">
@@ -503,6 +519,7 @@ function App() {
   const [gs,setGs]=useState({...INIT,board:mkBoard()});
   const [showHow,setShowHow]=useState(false);
   const [rollingDice,setRollingDice]=useState([]); // rolling中のdiceインデックス
+  const [doubletFlash,setDoubletFlash]=useState(false); // ゾロ目フラッシュ
 
   const handleStart=useCallback(t=>{
     document.body.className=THEMES[t].cls;
@@ -521,6 +538,11 @@ function App() {
     const indices=dice.map((_,i)=>i);
     setRollingDice(indices);
     setTimeout(()=>setRollingDice([]),500);
+    // ゾロ目フラッシュ
+    if(dice.length===4){
+      setDoubletFlash(true);
+      setTimeout(()=>setDoubletFlash(false),1800);
+    }
 
     const moves=allMoves(gs.board,gs.bar,dice,[],gs.currentPlayer);
     const pName=(c)=>theme==='cyber'?(c===WHITE?'シアン':'ピンク'):(c===WHITE?'ホワイト':'ブラック');
@@ -633,12 +655,45 @@ function App() {
       <Board gs={boardGs} onPoint={handlePoint} onBar={handleBar}
         legalMoves={legalMoves} barSelected={barSel} barDestSet={barDestSet} theme={theme}/>
       <div className="dice-row">
-        {gs.dice.length>0
-          ?gs.dice.map((v,i)=>(
-            <DieWrap key={i} value={v} used={gs.usedDice.includes(i)} theme={theme} rolling={rollingDice.includes(i)}/>
-          ))
-          :<span style={{opacity:.35,fontSize:'.85rem'}}>サイコロ待ち</span>}
+        {gs.dice.length>0 ? (
+          <>
+            {/* ゾロ目: 残り使用数バッジ */}
+            {gs.dice.length===4 && (
+              <div className="doublet-badge">
+                ×{gs.dice.length - gs.usedDice.length}
+              </div>
+            )}
+            {gs.dice.map((v,i)=>(
+              <DieWrap key={i} value={v} used={gs.usedDice.includes(i)} theme={theme} rolling={rollingDice.includes(i)}/>
+            ))}
+          </>
+        ) : (
+          <span style={{opacity:.35,fontSize:'.85rem'}}>サイコロ待ち</span>
+        )}
       </div>
+      {/* ゾロ目フラッシュ */}
+      {doubletFlash && (
+        <div style={{
+          position:'fixed', inset:0, display:'flex', alignItems:'center', justifyContent:'center',
+          zIndex:150, pointerEvents:'none',
+        }}>
+          <div style={{
+            fontSize: isCyber?'2.8rem':'2.4rem',
+            fontWeight:'bold',
+            padding:'18px 44px',
+            borderRadius: isCyber?4:12,
+            background: isCyber?'#080820':theme==='lofi'?'#2C2C34':'#EDE0B8',
+            border: isCyber?'2px solid #FFFF00':theme==='lofi'?'1px solid #7A8C6A':'3px solid #8B3A10',
+            color: isCyber?'#FFFF00':theme==='lofi'?'#B8D898':'#8B3A10',
+            boxShadow: isCyber?'0 0 30px #FFFF0088':'0 4px 24px rgba(0,0,0,0.3)',
+            fontFamily: isCyber?'Courier New,monospace':theme==='retro'?'Georgia,serif':'inherit',
+            letterSpacing: isCyber?4:2,
+            animation:'doubletPop 0.5s ease-out forwards',
+          }}>
+            🎲 ゾロ目！ ×4
+          </div>
+        </div>
+      )}
       <div className="btn-row">
         <button className="btn-primary"   onClick={handleRoll}    disabled={gs.phase!=='roll'}>🎲 サイコロを振る</button>
         <button className="btn-secondary" onClick={handleEndTurn} disabled={!canEnd}>ターン終了</button>
