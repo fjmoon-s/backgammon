@@ -738,11 +738,6 @@ function App() {
     }
   },[gs.phase,gs.currentPlayer,mode,aiThinking]);
 
-  const legalMoves=useMemo(()=>{
-    if(gs.phase!=='move')return[];
-    return allMoves(gs.board,gs.bar,gs.dice,gs.usedDice,gs.currentPlayer);
-  },[gs]);
-
   const handleRoll=useCallback(()=>{
     if(gs.phase!=='roll')return;
     const dice=rollDice();
