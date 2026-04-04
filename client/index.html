@@ -34,6 +34,49 @@ body.t-retro .pt-num.dn { color: rgba(60,20,0,0.95) !important; text-shadow: 0 1
 /* 2枚目以降の重なりはJSX側でinline styleで制御 */
 .checkers-up .checker + .checker { }
 .checkers-dn .checker + .checker { }
+
+/* ── コマアニメーション ── */
+.board-anim-wrap { position: relative; display: inline-block; }
+/* 飛行中コマ */
+.flying-checker {
+  position: absolute; width: 40px; height: 40px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.72rem; font-weight: bold;
+  pointer-events: none; z-index: 200;
+  transition: left 0.30s cubic-bezier(0.25,0.46,0.45,0.94),
+              top  0.30s cubic-bezier(0.25,0.46,0.45,0.94),
+              transform 0.30s ease;
+}
+body.t-retro .flying-checker.white { background: #F5F0E0; border: 3px solid #8B3A10; color: #3A1800; }
+body.t-retro .flying-checker.black { background: #3A1800; border: 3px solid #C4A24A; color: #FFD700; }
+body.t-lofi  .flying-checker.white { background: #D8C8A8; border: 2px solid #A89878; color: #2A1800; }
+body.t-lofi  .flying-checker.black { background: #5A4838; border: 2px solid #9A8868; color: #E8D8B8; }
+body.t-cyber .flying-checker.white { background: #00FFEE; border: 2px solid #fff; color:#000; box-shadow:0 0 10px #00FFEE88; }
+body.t-cyber .flying-checker.black { background: #FF44CC; border: 2px solid #fff; color:#000; box-shadow:0 0 10px #FF44CC88; }
+/* 着地バウンス */
+@keyframes checkerBounce {
+  0%   { transform: scale(1.35); }
+  45%  { transform: scale(0.87); }
+  72%  { transform: scale(1.10); }
+  100% { transform: scale(1); }
+}
+.checker.bounce { animation: checkerBounce 0.28s ease-out forwards; }
+/* ヒット: 赤フラッシュ */
+@keyframes hitFlash {
+  0%   { box-shadow: 0 0 0 0 rgba(255,40,40,0); }
+  25%  { box-shadow: 0 0 0 8px rgba(255,40,40,0.7); }
+  60%  { box-shadow: 0 0 0 14px rgba(255,40,40,0.3); }
+  100% { box-shadow: 0 0 0 0 rgba(255,40,40,0); }
+}
+/* ヒット: ポイント振動 */
+@keyframes ptShake {
+  0%,100% { transform: translateX(0); }
+  20%  { transform: translateX(-4px); }
+  40%  { transform: translateX(4px); }
+  65%  { transform: translateX(-3px); }
+  82%  { transform: translateX(2px); }
+}
+.point-cell.shaking { animation: ptShake 0.32s ease-out; }
 .board-shell { display: flex; flex-direction: row; align-items: stretch; gap: 4px; padding: 4px; border-radius: 6px; }
 .board-half { display: flex; flex-direction: column; }
 .half-top, .half-bot { display: flex; flex-direction: row; }
@@ -482,25 +525,118 @@ function HowToModal({onClose,theme}) {
   );
 }
 
-/* ── CHECKER / POINT ── */
-function Checker({color,count,overlapDir}) {
+/* ══════════════════════════════════════════════════
+   ボード座標計算
+   ボード全体: padding=4px, gap=4px
+   左半分: points 12-17(up) / 11-6(dn)  各52px幅
+   バー: 44px
+   右半分: points 18-23(up) / 5-0(dn)   各52px幅
+   上段(up): top=4px から
+   下段(dn): top=4+192+28=224px から
+   point-cell height=192px, mid-spacer=28px
+══════════════════════════════════════════════════ */
+const PT_W = 52;    // point cell width
+const BAR_W = 44;   // bar width
+const BOARD_PAD = 4;
+const CHECKER_SIZE = 40;
+const HALF_H = 192; // point-cell height
+const MID_H = 28;   // mid-spacer height
+
+// ポイントインデックス(0-23) → ボード上のx,y中心座標
+// topLeft=[12,13,14,15,16,17], topRight=[18,19,20,21,22,23]
+// botLeft=[11,10,9,8,7,6],     botRight=[5,4,3,2,1,0]
+function ptCenter(idx, stackPos) {
+  const topL  = [12,13,14,15,16,17];
+  const topR  = [18,19,20,21,22,23];
+  const botL  = [11,10,9,8,7,6];
+  const botR  = [5,4,3,2,1,0];
+
+  let col = -1, isTop = true;
+
+  const tiL = topL.indexOf(idx);
+  const tiR = topR.indexOf(idx);
+  const biL = botL.indexOf(idx);
+  const biR = botR.indexOf(idx);
+
+  if (tiL !== -1) { col = tiL; isTop = true; }
+  else if (tiR !== -1) { col = 6 + tiR; isTop = true; }
+  else if (biL !== -1) { col = biL; isTop = false; }
+  else if (biR !== -1) { col = 6 + biR; isTop = false; }
+
+  // x: pad + col*PT_W (+ BAR_W gap after col 5)
+  const halfGap = col >= 6 ? BAR_W + BOARD_PAD : 0;
+  const x = BOARD_PAD + col * PT_W + halfGap + PT_W / 2;
+
+  // y: top=4+(stackPos*26), bot=4+192+28+(192-4-stackPos*26)
+  let y;
+  if (isTop) {
+    y = BOARD_PAD + 4 + stackPos * 26 + CHECKER_SIZE / 2;
+  } else {
+    y = BOARD_PAD + HALF_H + MID_H + (HALF_H - 4 - stackPos * 26 - CHECKER_SIZE / 2);
+  }
+  return { x, y };
+}
+
+// バーの中心座標
+function barCenter(color) {
+  const x = BOARD_PAD + 6 * PT_W + BAR_W / 2;
+  const y = color === 'white'
+    ? BOARD_PAD + HALF_H + MID_H + HALF_H / 2
+    : BOARD_PAD + HALF_H / 2;
+  return { x, y };
+}
+
+/* ── FlyingChecker: アニメーション用コンポーネント ── */
+function FlyingChecker({ color, fromX, fromY, toX, toY, onDone }) {
+  const [pos, setPos] = React.useState({ x: fromX, y: fromY });
+  React.useEffect(() => {
+    // 1フレーム後に移動開始（CSS transitionをトリガー）
+    const raf = requestAnimationFrame(() => {
+      requestAnimationFrame(() => setPos({ x: toX, y: toY }));
+    });
+    return () => cancelAnimationFrame(raf);
+  }, [toX, toY]);
+
+  React.useEffect(() => {
+    const t = setTimeout(onDone, 340);
+    return () => clearTimeout(t);
+  }, [onDone]);
+
+  return (
+    <div
+      className={`flying-checker ${color}`}
+      style={{
+        left: pos.x - CHECKER_SIZE / 2,
+        top:  pos.y - CHECKER_SIZE / 2,
+      }}
+    />
+  );
+}
+
+
+function Checker({color,count,overlapDir,bounce}) {
   let style = undefined;
   if(overlapDir==='up') style = {marginTop: '-14px'};
   if(overlapDir==='dn') style = {marginBottom: '-14px'};
   return (
-    <div className={`checker ${color}`} style={style}>
+    <div className={`checker ${color}${bounce?' bounce':''}`} style={style}>
       {count>1?count:''}
     </div>
   );
 }
-function PointCheckers({point,dir}) {
+function PointCheckers({point,dir,bounceTop}) {
   if(!point.color||!point.count)return null;
   const show=Math.min(point.count,5);
+  // 視覚的に「一番上」のコマ：
+  //   up方向  → column なので最後の要素(i===show-1)が一番上
+  //   dn方向  → column-reverse なので最初の要素(i===0)が視覚上の一番上
+  const bounceIdx = dir==='up' ? show-1 : 0;
   return (
     <div className={dir==='up'?'checkers-up':'checkers-dn'}>
       {Array.from({length:show},(_,i)=>(
         <Checker key={i} color={point.color}
           overlapDir={i>0 ? dir : undefined}
+          bounce={bounceTop && i===bounceIdx}
           count={i===show-1&&point.count>5?point.count:''}/>
       ))}
       {point.count>5&&(
@@ -527,7 +663,7 @@ function BearOffTray({color,count,theme}) {
 }
 
 /* ── BOARD ── */
-function Board({gs,onPoint,onBar,legalMoves,barSelected,barDestSet,theme}) {
+function Board({gs,onPoint,onBar,legalMoves,barSelected,barDestSet,theme,flyingChecker,bouncePoint,shakingPoint}) {
   const {board,bar,borneOff,currentPlayer,selected}=gs;
   const fromSet=useMemo(()=>{
     if(barSelected)return new Set();
@@ -544,18 +680,20 @@ function Board({gs,onPoint,onBar,legalMoves,barSelected,barDestSet,theme}) {
   const renderPt=(idx,dir)=>{
     const tc=idx%2===0?'tA':'tB';
     const isSel=selected===idx,isFrom=!barSelected&&!selected&&fromSet.has(idx),isTo=toSet.has(idx);
+    const isShaking = shakingPoint===idx;
     return (
-      <div key={idx} className="point-cell" onClick={()=>onPoint(idx)} title={`Point ${idx2pt(idx)}`}>
+      <div key={idx} className={`point-cell${isShaking?' shaking':''}`}
+        onClick={()=>onPoint(idx)} title={`Point ${idx2pt(idx)}`}>
         <div className={`tri ${dir} ${tc}`}/>
         {(isSel||isFrom||isTo)&&<div className={`pt-overlay ${isSel?'pt-selected':'pt-highlight'}`}/>}
         <div className={`pt-num ${dir}`}>{idx2pt(idx)}</div>
-        <PointCheckers point={board[idx]} dir={dir}/>
+        <PointCheckers point={board[idx]} dir={dir} bounceTop={bouncePoint===idx}/>
       </div>
     );
   };
   const bearBg=active=>active?'rgba(255,220,0,0.35)':(theme==='cyber'?'#0A0520':theme==='lofi'?'#222018':'#9A7020');
   const bearBorder=active=>active?'2px dashed rgba(255,220,50,0.9)':'2px solid transparent';
-  return (
+  const boardJsx = (
     <div className="board-shell">
       <div className="board-half">
         <div className="half-top">{topL.map(i=>renderPt(i,'up'))}</div>
@@ -587,6 +725,19 @@ function Board({gs,onPoint,onBar,legalMoves,barSelected,barDestSet,theme}) {
         </div>
         <BearOffTray color={WHITE} count={borneOff.white} theme={theme}/>
       </div>
+    </div>
+  );
+  return (
+    <div className="board-anim-wrap">
+      {boardJsx}
+      {flyingChecker && (
+        <FlyingChecker
+          color={flyingChecker.color}
+          fromX={flyingChecker.fromX} fromY={flyingChecker.fromY}
+          toX={flyingChecker.toX}   toY={flyingChecker.toY}
+          onDone={flyingChecker.onDone}
+        />
+      )}
     </div>
   );
 }
@@ -657,12 +808,17 @@ function ThemePicker({onStart}) {
 /* ── MAIN APP ── */
 function App() {
   const [theme,setTheme]=useState(null);
-  const [mode,setMode]=useState('human'); // 'human' | 'ai'
+  const [mode,setMode]=useState('human');
   const [gs,setGs]=useState({...INIT,board:mkBoard()});
   const [showHow,setShowHow]=useState(false);
   const [rollingDice,setRollingDice]=useState([]);
   const [doubletFlash,setDoubletFlash]=useState(false);
   const [aiThinking,setAiThinking]=useState(false);
+  // アニメーション状態
+  const [flyingChecker,setFlyingChecker]=useState(null); // {color,fromX,fromY,toX,toY,onDone}
+  const [bouncePoint,setBouncePoint]=useState(null);     // 着地ポイントindex
+  const [shakingPoint,setShakingPoint]=useState(null);   // ヒットされたポイントindex
+  const animatingRef = React.useRef(false);
 
   const handleStart=useCallback((t,m)=>{
     document.body.className=THEMES[t].cls;
@@ -707,36 +863,37 @@ function App() {
         }
       },800);
     } else if(gs.phase==='move'){
-      // AIが手を計算して実行
+      // AIが手を計算
       setTimeout(()=>{
         const aiMoves=getAIMoves(gs.board,gs.bar,gs.borneOff,gs.dice);
         if(!aiMoves.length){
-          // 手なし → ターン終了
           setGs(p=>({...p,currentPlayer:WHITE,dice:[],usedDice:[],phase:'roll',selected:null}));
           setAiThinking(false);
           return;
         }
-        // 手を順番に実行
-        let board=gs.board, bar=gs.bar, borneOff=gs.borneOff, usedDice=gs.usedDice;
-        let log=[...gs.log];
-        let winner=null;
-        const pName=(c)=>theme==='cyber'?(c===WHITE?'シアン':'ピンク'):(c===WHITE?'ホワイト':'ブラック');
-        for(const move of aiMoves){
-          const r=applyMove(board,bar,borneOff,move,BLACK,gs.dice,usedDice,theme);
-          board=r.board; bar=r.bar; borneOff=r.borneOff; usedDice=r.usedDice;
-          log=[r.logMsg,...log.slice(0,29)];
-          winner=checkWinner(borneOff);
-          if(winner) break;
-        }
-        if(winner){
-          setGs(p=>({...p,board,bar,borneOff,winner,phase:'gameover',selected:null,log:[`🏆 ${pName(winner)}の勝ち！`,...log]}));
-        } else {
-          setGs(p=>({...p,board,bar,borneOff,usedDice:[],currentPlayer:WHITE,dice:[],phase:'roll',selected:null,log}));
-        }
-        setAiThinking(false);
+        // 最初の1手だけdoMoveで実行（アニメーション付き）
+        // 残りの手はdoMove内のonDone→次のuseEffectトリガーで連鎖実行
+        setAiThinking(false); // doMoveに任せるのでここで解除
       },600);
     }
   },[gs.phase,gs.currentPlayer,mode,aiThinking]);
+
+  // AIのmoveフェーズ: 1手ずつdoMoveで実行（アニメーション付き）
+  useEffect(()=>{
+    if(mode!=='ai') return;
+    if(gs.phase!=='move') return;
+    if(gs.currentPlayer!==BLACK) return;
+    if(flyingChecker) return; // アニメーション中は待つ
+    if(aiThinking) return;
+
+    const aiMoves=getAIMoves(gs.board,gs.bar,gs.borneOff,gs.dice);
+    if(!aiMoves.length){
+      setGs(p=>({...p,currentPlayer:WHITE,dice:[],usedDice:[],phase:'roll',selected:null}));
+      return;
+    }
+    // 最初の1手をdoMoveで実行（アニメーション→onDone→state更新→再トリガー）
+    setTimeout(()=>doMove(aiMoves[0]), 300);
+  },[gs.phase,gs.currentPlayer,gs.board,mode,flyingChecker,aiThinking]);
 
   const handleRoll=useCallback(()=>{
     if(gs.phase!=='roll')return;
@@ -767,17 +924,62 @@ function App() {
   },[gs]);
 
   const doMove=useCallback(move=>{
-    const {board,bar,borneOff,usedDice,logMsg}=applyMove(gs.board,gs.bar,gs.borneOff,move,gs.currentPlayer,gs.dice,gs.usedDice,theme);
-    const winner=checkWinner(borneOff);
-    const log=[logMsg,...gs.log.slice(0,29)];
-    const pName=(c)=>theme==='cyber'?(c===WHITE?'シアン':'ピンク'):(c===WHITE?'ホワイト':'ブラック');
-    if(winner){setGs(p=>({...p,board,bar,borneOff,winner,phase:'gameover',selected:null,log:[`🏆 ${pName(winner)}の勝ち！`,...log]}));return;}
-    const rem=allMoves(board,bar,gs.dice,usedDice,gs.currentPlayer);
-    if(usedDice.length===gs.dice.length||!rem.length){
-      setGs(p=>({...p,board,bar,borneOff,usedDice:[],currentPlayer:p.currentPlayer===WHITE?BLACK:WHITE,dice:[],phase:'roll',selected:null,log}));
+    // 移動元・移動先の座標を計算
+    const color = gs.currentPlayer;
+    const fromCount = move.from==='bar' ? 0 : gs.board[move.from].count;
+    const toCount   = move.to==='bearoff' ? 0 : gs.board[move.to].count;
+
+    let fromPos, toPos;
+    if(move.from==='bar') {
+      fromPos = barCenter(color);
     } else {
-      setGs(p=>({...p,board,bar,borneOff,usedDice,selected:null,log}));
+      const dir = move.from <= 11 ? 'dn' : 'up';
+      fromPos = ptCenter(move.from, fromCount - 1);
     }
+    if(move.to==='bearoff') {
+      // ベアオフ先はボード右外
+      toPos = { x: 6*PT_W + BAR_W + 6*PT_W + BOARD_PAD*3 + 48, y: color===WHITE ? HALF_H+MID_H+HALF_H/2 : HALF_H/2 };
+    } else {
+      toPos = ptCenter(move.to, toCount);
+    }
+
+    // ヒット判定
+    const opp = color===WHITE?BLACK:WHITE;
+    const isHit = move.to!=='bearoff' && gs.board[move.to]?.color===opp && gs.board[move.to]?.count===1;
+
+    // アニメーション開始（盤面更新は完了後）
+    animatingRef.current = true;
+    setFlyingChecker({
+      color,
+      fromX: fromPos.x, fromY: fromPos.y,
+      toX: toPos.x, toY: toPos.y,
+      onDone: () => {
+        setFlyingChecker(null);
+        animatingRef.current = false;
+        // 着地バウンス
+        if(move.to !== 'bearoff') {
+          setBouncePoint(move.to);
+          setTimeout(()=>setBouncePoint(null), 350);
+        }
+        // ヒットエフェクト
+        if(isHit) {
+          setShakingPoint(move.to);
+          setTimeout(()=>setShakingPoint(null), 400);
+        }
+        // 盤面に反映
+        const {board,bar,borneOff,usedDice,logMsg}=applyMove(gs.board,gs.bar,gs.borneOff,move,gs.currentPlayer,gs.dice,gs.usedDice,theme);
+        const winner=checkWinner(borneOff);
+        const log=[logMsg,...gs.log.slice(0,29)];
+        const pName=(c)=>theme==='cyber'?(c===WHITE?'シアン':'ピンク'):(c===WHITE?'ホワイト':'ブラック');
+        if(winner){setGs(p=>({...p,board,bar,borneOff,winner,phase:'gameover',selected:null,log:[`🏆 ${pName(winner)}の勝ち！`,...log]}));return;}
+        const rem=allMoves(board,bar,gs.dice,usedDice,gs.currentPlayer);
+        if(usedDice.length===gs.dice.length||!rem.length){
+          setGs(p=>({...p,board,bar,borneOff,usedDice:[],currentPlayer:p.currentPlayer===WHITE?BLACK:WHITE,dice:[],phase:'roll',selected:null,log}));
+        } else {
+          setGs(p=>({...p,board,bar,borneOff,usedDice,selected:null,log}));
+        }
+      }
+    });
   },[gs,theme]);
 
   const handlePoint=useCallback(idx=>{
@@ -861,7 +1063,8 @@ function App() {
         <div className="status-msg">{msg}</div>
       </div>
       <Board gs={boardGs} onPoint={handlePoint} onBar={handleBar}
-        legalMoves={legalMoves} barSelected={barSel} barDestSet={barDestSet} theme={theme}/>
+        legalMoves={legalMoves} barSelected={barSel} barDestSet={barDestSet} theme={theme}
+        flyingChecker={flyingChecker} bouncePoint={bouncePoint} shakingPoint={shakingPoint}/>
       <div className="dice-row">
         {gs.dice.length>0 ? (
           <>
