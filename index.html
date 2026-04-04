@@ -288,6 +288,105 @@ const applyMove=(board,bar,borneOff,move,c,dice,used,theme)=>{
 };
 const checkWinner=bo=>bo.white===15?WHITE:bo.black===15?BLACK:null;
 
+/* ══════════════════════════════════════════════════
+   AI評価関数（簡易評価AI）
+   プレイヤー = WHITE、AI = BLACK
+══════════════════════════════════════════════════ */
+
+// ピップカウント：ゴールまでの総距離（小さいほど有利）
+function pipCount(board, bar, color) {
+  let count = bar[color] * (color === WHITE ? 25 : 25);
+  for (let i = 0; i < 24; i++) {
+    if (board[i].color === color && board[i].count > 0) {
+      const dist = color === WHITE ? idx2pt(i) : (25 - idx2pt(i));
+      count += dist * board[i].count;
+    }
+  }
+  return count;
+}
+
+// ブロット数（1枚だけのポイント → 打たれやすい）
+function blotCount(board, color) {
+  let count = 0;
+  for (let i = 0; i < 24; i++) {
+    if (board[i].color === color && board[i].count === 1) count++;
+  }
+  return count;
+}
+
+// ブロックポイント数（2枚以上 → 相手が入れない）
+function blockCount(board, color) {
+  let count = 0;
+  for (let i = 0; i < 24; i++) {
+    if (board[i].color === color && board[i].count >= 2) count++;
+  }
+  return count;
+}
+
+// 盤面の評価値（AIにとって高いほど良い）
+function evaluateBoard(board, bar, borneOff) {
+  let score = 0;
+
+  // ベアオフ進捗（最重要）
+  score += borneOff[BLACK] * 15;
+  score -= borneOff[WHITE] * 15;
+
+  // ピップカウント差（AIが有利なほど高い）
+  const aiPip  = pipCount(board, bar, BLACK);
+  const oppPip = pipCount(board, bar, WHITE);
+  score += (oppPip - aiPip) * 0.5;
+
+  // ブロックポイント（守備力）
+  score += blockCount(board, BLACK) * 4;
+  score -= blockCount(board, WHITE) * 3;
+
+  // ブロット（少ないほど良い）
+  score -= blotCount(board, BLACK) * 6;
+  score += blotCount(board, WHITE) * 3;
+
+  // バーに送った相手コマ（大きなアドバンテージ）
+  score += bar[WHITE] * 12;
+  score -= bar[BLACK] * 12;
+
+  // ホームボードの制圧（ベアオフに近い）
+  for (let i = 18; i < 24; i++) {
+    if (board[i].color === BLACK && board[i].count >= 2) score += 3;
+  }
+
+  return score;
+}
+
+// 1手分のmoveを適用して評価値を返す
+function scoreMove(board, bar, borneOff, move, dice, usedDice) {
+  const result = applyMove(board, bar, borneOff, move, BLACK, dice, usedDice, null);
+  return evaluateBoard(result.board, result.bar, result.borneOff);
+}
+
+// 再帰的に全moves列を探索してベストスコアを返す（深さ制限あり）
+function bestMoveSequence(board, bar, borneOff, dice, usedDice, depth) {
+  if (depth === 0) return { score: evaluateBoard(board, bar, borneOff), moves: [] };
+  const moves = allMoves(board, bar, dice, usedDice, BLACK);
+  if (!moves.length) return { score: evaluateBoard(board, bar, borneOff), moves: [] };
+
+  let best = null;
+  for (const move of moves) {
+    const result = applyMove(board, bar, borneOff, move, BLACK, dice, usedDice, null);
+    const newUsed = result.usedDice;
+    const sub = bestMoveSequence(result.board, result.bar, result.borneOff, dice, newUsed, depth - 1);
+    const total = sub.score;
+    if (best === null || total > best.score) {
+      best = { score: total, moves: [move, ...sub.moves] };
+    }
+  }
+  return best || { score: evaluateBoard(board, bar, borneOff), moves: [] };
+}
+
+// AIが実行すべき手のリストを返す
+function getAIMoves(board, bar, borneOff, dice) {
+  const result = bestMoveSequence(board, bar, borneOff, dice, [], Math.min(dice.length, 4));
+  return result.moves;
+}
+
 /* ── SVGサイコロ ── */
 // ドット座標定義
 const DOT_POSITIONS = {
@@ -495,8 +594,8 @@ function Board({gs,onPoint,onBar,legalMoves,barSelected,barDestSet,theme}) {
 /* ── THEME PICKER ── */
 function ThemePicker({onStart}) {
   const [sel,setSel]=useState('retro');
+  const [mode,setMode]=useState('human');
   const [showHow,setShowHow]=useState(false);
-  // タイトル・サブタイトル・ボタン類は常にレトロ固定
   return (
     <div className="theme-screen">
       {showHow&&<HowToModal onClose={()=>setShowHow(false)} theme="retro"/>}
@@ -507,6 +606,23 @@ function ThemePicker({onStart}) {
         <div style={{fontSize:'0.85rem',marginTop:6,letterSpacing:2,color:'#8B3A10',opacity:0.65,fontFamily:'Georgia,serif'}}>
           テーマを選んでゲームスタート
         </div>
+      </div>
+
+      {/* モード選択 */}
+      <div style={{display:'flex',gap:12,justifyContent:'center'}}>
+        {[{key:'human',label:'👥 ローカル2人対戦'},{key:'ai',label:'🤖 AI対戦'}].map(m=>(
+          <div key={m.key} onClick={()=>setMode(m.key)}
+            style={{
+              padding:'10px 24px',borderRadius:8,cursor:'pointer',
+              fontFamily:'Georgia,serif',fontWeight:'bold',fontSize:'0.9rem',
+              background:mode===m.key?'#8B3A10':'#D4C090',
+              color:mode===m.key?'#F5F0E0':'#3A1800',
+              border:mode===m.key?'2px solid #5A2008':'2px solid #C4A24A',
+              transition:'all 0.18s',
+            }}>
+            {m.label}
+          </div>
+        ))}
       </div>
 
       <div className="theme-cards">
@@ -526,7 +642,7 @@ function ThemePicker({onStart}) {
       </div>
 
       {/* ゲームスタートボタン: 常にレトロ */}
-      <button className="start-btn" onClick={()=>onStart(sel)}
+      <button className="start-btn" onClick={()=>onStart(sel,mode)}
         style={{background:'#8B3A10',color:'#F5F0E0',fontFamily:'Georgia,serif',letterSpacing:2,border:'none'}}>
         ゲームスタート →
       </button>
@@ -541,15 +657,86 @@ function ThemePicker({onStart}) {
 /* ── MAIN APP ── */
 function App() {
   const [theme,setTheme]=useState(null);
+  const [mode,setMode]=useState('human'); // 'human' | 'ai'
   const [gs,setGs]=useState({...INIT,board:mkBoard()});
   const [showHow,setShowHow]=useState(false);
-  const [rollingDice,setRollingDice]=useState([]); // rolling中のdiceインデックス
-  const [doubletFlash,setDoubletFlash]=useState(false); // ゾロ目フラッシュ
+  const [rollingDice,setRollingDice]=useState([]);
+  const [doubletFlash,setDoubletFlash]=useState(false);
+  const [aiThinking,setAiThinking]=useState(false);
 
-  const handleStart=useCallback(t=>{
+  const handleStart=useCallback((t,m)=>{
     document.body.className=THEMES[t].cls;
     setTheme(t);
+    setMode(m);
   },[]);
+
+  const legalMoves=useMemo(()=>{
+    if(gs.phase!=='move')return[];
+    return allMoves(gs.board,gs.bar,gs.dice,gs.usedDice,gs.currentPlayer);
+  },[gs]);
+
+  // AIターン実行
+  useEffect(()=>{
+    if(mode!=='ai') return;
+    if(gs.phase!=='roll'&&gs.phase!=='move') return;
+    if(gs.currentPlayer!==BLACK) return;
+    if(aiThinking) return;
+
+    setAiThinking(true);
+
+    if(gs.phase==='roll'){
+      // AIのサイコロを振る（少し待ってから）
+      setTimeout(()=>{
+        const dice=rollDice();
+        const indices=dice.map((_,i)=>i);
+        setRollingDice(indices);
+        setTimeout(()=>setRollingDice([]),500);
+        if(dice.length===4){
+          setDoubletFlash(true);
+          setTimeout(()=>setDoubletFlash(false),1800);
+        }
+        const moves=allMoves(gs.board,gs.bar,dice,[],BLACK);
+        const pName=(c)=>theme==='cyber'?(c===WHITE?'シアン':'ピンク'):(c===WHITE?'ホワイト':'ブラック');
+        const log=[`${pName(BLACK)}: [${dice.join(', ')}]`,...gs.log.slice(0,29)];
+        if(!moves.length){
+          setGs(p=>({...p,dice,usedDice:dice.map((_,i)=>i),phase:'roll',currentPlayer:WHITE,selected:null,log:['手なし → スキップ',...log]}));
+          setAiThinking(false);
+        } else {
+          setGs(p=>({...p,dice,usedDice:[],phase:'move',selected:null,log}));
+          setAiThinking(false);
+        }
+      },800);
+    } else if(gs.phase==='move'){
+      // AIが手を計算して実行
+      setTimeout(()=>{
+        const aiMoves=getAIMoves(gs.board,gs.bar,gs.borneOff,gs.dice);
+        if(!aiMoves.length){
+          // 手なし → ターン終了
+          setGs(p=>({...p,currentPlayer:WHITE,dice:[],usedDice:[],phase:'roll',selected:null}));
+          setAiThinking(false);
+          return;
+        }
+        // 手を順番に実行
+        let board=gs.board, bar=gs.bar, borneOff=gs.borneOff, usedDice=gs.usedDice;
+        let log=[...gs.log];
+        let winner=null;
+        const pName=(c)=>theme==='cyber'?(c===WHITE?'シアン':'ピンク'):(c===WHITE?'ホワイト':'ブラック');
+        for(const move of aiMoves){
+          const r=applyMove(board,bar,borneOff,move,BLACK,gs.dice,usedDice,theme);
+          board=r.board; bar=r.bar; borneOff=r.borneOff; usedDice=r.usedDice;
+          log=[r.logMsg,...log.slice(0,29)];
+          winner=checkWinner(borneOff);
+          if(winner) break;
+        }
+        if(winner){
+          setGs(p=>({...p,board,bar,borneOff,winner,phase:'gameover',selected:null,log:[`🏆 ${pName(winner)}の勝ち！`,...log]}));
+        } else {
+          setGs(p=>({...p,board,bar,borneOff,usedDice:[],currentPlayer:WHITE,dice:[],phase:'roll',selected:null,log}));
+        }
+        setAiThinking(false);
+      },600);
+    }
+  },[gs.phase,gs.currentPlayer,mode,aiThinking]);
 
   const legalMoves=useMemo(()=>{
     if(gs.phase!=='move')return[];
@@ -624,7 +811,7 @@ function App() {
     if(legalMoves.some(m=>m.from==='bar'))setGs(p=>({...p,selected:'bar'}));
   },[gs,legalMoves]);
 
-  const handleReset=()=>{setGs({...INIT,board:mkBoard()});setTheme(null);document.body.className='t-retro';};
+  const handleReset=()=>{setGs({...INIT,board:mkBoard()});setTheme(null);setMode('human');document.body.className='t-retro';};
 
   const barSel=gs.selected==='bar';
   const barDestSet=useMemo(()=>{
@@ -652,7 +839,8 @@ function App() {
   };
 
   let msg='';
-  if(gs.phase==='roll')msg='サイコロを振ってください';
+  if(aiThinking) msg='🤖 AIが考えています...';
+  else if(gs.phase==='roll') msg=mode==='ai'&&gs.currentPlayer===BLACK?'🤖 AIのターン':' サイコロを振ってください';
   else if(gs.phase==='move'){
     if(gs.bar[gs.currentPlayer]>0)msg=`バーのコマを入れてください（${gs.bar[gs.currentPlayer]}個）`;
     else if(barSel)msg='バーのコマ選択中 — 移動先を選んでください';
@@ -720,10 +908,13 @@ function App() {
         </div>
       )}
       <div className="btn-row">
-        <button className="btn-primary"   onClick={handleRoll}    disabled={gs.phase!=='roll'}>🎲 サイコロを振る</button>
-        <button className="btn-secondary" onClick={handleEndTurn} disabled={!canEnd}>ターン終了</button>
+        <button className="btn-primary" onClick={handleRoll}
+          disabled={gs.phase!=='roll'||aiThinking||(mode==='ai'&&gs.currentPlayer===BLACK)}>
+          🎲 サイコロを振る
+        </button>
+        <button className="btn-secondary" onClick={handleEndTurn} disabled={!canEnd||aiThinking}>ターン終了</button>
         <button className="btn-secondary" onClick={()=>setShowHow(true)} style={{opacity:.8}}>遊び方</button>
-        <button className="btn-danger"    onClick={handleReset}>テーマ選択に戻る</button>
+        <button className="btn-danger" onClick={handleReset}>テーマ選択に戻る</button>
       </div>
       <div className="log">
         {gs.log.map((e,i)=><div key={i} className="log-entry">{e}</div>)}
