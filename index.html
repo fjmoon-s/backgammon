@@ -425,8 +425,9 @@ function bestMoveSequence(board, bar, borneOff, dice, usedDice, depth) {
 }
 
 // AIが実行すべき手のリストを返す
-function getAIMoves(board, bar, borneOff, dice) {
-  const result = bestMoveSequence(board, bar, borneOff, dice, [], Math.min(dice.length, 4));
+function getAIMoves(board, bar, borneOff, dice, usedDice) {
+  const remaining = dice.length - usedDice.length;
+  const result = bestMoveSequence(board, bar, borneOff, dice, usedDice, Math.min(remaining, 4));
   return result.moves;
 }
 
@@ -870,14 +871,14 @@ function App() {
     if(flyingChecker) return; // アニメーション中は待つ
     if(aiThinking) return;
 
-    const aiMoves=getAIMoves(gs.board,gs.bar,gs.borneOff,gs.dice);
+    const aiMoves=getAIMoves(gs.board,gs.bar,gs.borneOff,gs.dice,gs.usedDice);
     if(!aiMoves.length){
       setGs(p=>({...p,currentPlayer:WHITE,dice:[],usedDice:[],phase:'roll',selected:null}));
       return;
     }
     // 最初の1手をdoMoveで実行（アニメーション→onDone→state更新→再トリガー）
     setTimeout(()=>doMove(aiMoves[0]), 300);
-  },[gs.phase,gs.currentPlayer,gs.board,mode,flyingChecker,aiThinking]);
+  },[gs.phase,gs.currentPlayer,gs.board,gs.usedDice,mode,flyingChecker,aiThinking]);
 
   const handleRoll=useCallback(()=>{
     if(gs.phase!=='roll')return;
