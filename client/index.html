@@ -834,48 +834,32 @@ function App() {
   // AIターン実行
   useEffect(()=>{
     if(mode!=='ai') return;
-    if(gs.phase!=='roll'&&gs.phase!=='move') return;
+    if(gs.phase!=='roll') return;
     if(gs.currentPlayer!==BLACK) return;
     if(aiThinking) return;
 
     setAiThinking(true);
 
-    if(gs.phase==='roll'){
-      // AIのサイコロを振る（少し待ってから）
-      setTimeout(()=>{
-        const dice=rollDice();
-        const indices=dice.map((_,i)=>i);
-        setRollingDice(indices);
-        setTimeout(()=>setRollingDice([]),500);
-        if(dice.length===4){
-          setDoubletFlash(true);
-          setTimeout(()=>setDoubletFlash(false),1800);
-        }
-        const moves=allMoves(gs.board,gs.bar,dice,[],BLACK);
-        const pName=(c)=>theme==='cyber'?(c===WHITE?'シアン':'ピンク'):(c===WHITE?'ホワイト':'ブラック');
-        const log=[`${pName(BLACK)}: [${dice.join(', ')}]`,...gs.log.slice(0,29)];
-        if(!moves.length){
-          setGs(p=>({...p,dice,usedDice:dice.map((_,i)=>i),phase:'roll',currentPlayer:WHITE,selected:null,log:['手なし → スキップ',...log]}));
-          setAiThinking(false);
-        } else {
-          setGs(p=>({...p,dice,usedDice:[],phase:'move',selected:null,log}));
-          setAiThinking(false);
-        }
-      },800);
-    } else if(gs.phase==='move'){
-      // AIが手を計算
-      setTimeout(()=>{
-        const aiMoves=getAIMoves(gs.board,gs.bar,gs.borneOff,gs.dice);
-        if(!aiMoves.length){
-          setGs(p=>({...p,currentPlayer:WHITE,dice:[],usedDice:[],phase:'roll',selected:null}));
-          setAiThinking(false);
-          return;
-        }
-        // 最初の1手だけdoMoveで実行（アニメーション付き）
-        // 残りの手はdoMove内のonDone→次のuseEffectトリガーで連鎖実行
-        setAiThinking(false); // doMoveに任せるのでここで解除
-      },600);
-    }
+    // AIのサイコロを振る（少し待ってから）
+    setTimeout(()=>{
+      const dice=rollDice();
+      const indices=dice.map((_,i)=>i);
+      setRollingDice(indices);
+      setTimeout(()=>setRollingDice([]),500);
+      if(dice.length===4){
+        setDoubletFlash(true);
+        setTimeout(()=>setDoubletFlash(false),1800);
+      }
+      const moves=allMoves(gs.board,gs.bar,dice,[],BLACK);
+      const pName=(c)=>theme==='cyber'?(c===WHITE?'シアン':'ピンク'):(c===WHITE?'ホワイト':'ブラック');
+      const log=[`${pName(BLACK)}: [${dice.join(', ')}]`,...gs.log.slice(0,29)];
+      if(!moves.length){
+        setGs(p=>({...p,dice,usedDice:dice.map((_,i)=>i),phase:'roll',currentPlayer:WHITE,selected:null,log:['手なし → スキップ',...log]}));
+      } else {
+        setGs(p=>({...p,dice,usedDice:[],phase:'move',selected:null,log}));
+      }
+      setAiThinking(false);
+    },800);
   },[gs.phase,gs.currentPlayer,mode,aiThinking]);
 
   // AIのmoveフェーズ: 1手ずつdoMoveで実行（アニメーション付き）
